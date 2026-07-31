@@ -21,6 +21,18 @@ async def start_command(message: types.Message):
 async def help_command(message: types.Message):
     await message.answer("Доступные команды:\n/start – Приветствие\n/help – Помощь")
 
+@dp.message(Command("getfeedback"))
+async def get_feedback(message: types.Message):
+    try:
+        with open("feedback.txt", "r", encoding="utf-8") as f:
+            feedbacks = f.read()
+        if feedbacks.strip():
+            await message.answer(f"📋 Сохранённые мнения:\n\n{feedbacks}")
+        else:
+            await message.answer("📭 Пока нет мнений.")
+    except FileNotFoundError:
+        await message.answer("📭 Файл с мнениями пока не создан.")
+
 @dp.message(lambda message: message.text == "📅 Расписание")
 async def schedule_button(message: types.Message):
     await message.answer("Расписание Игр кочевников будет добавлено позже.")
@@ -40,6 +52,16 @@ async def compliment_button(message: types.Message):
 @dp.message(lambda message: message.text == "❓ Помощь")
 async def help_button(message: types.Message):
     await help_command(message)
+
+@dp.message(lambda message: message.text == "💬 Оставить мнение")
+async def feedback_button(message: types.Message):
+    await message.answer("Напишите своё мнение — я сохраню его.")
+
+@dp.message()
+async def save_feedback(message: types.Message):
+    with open("feedback.txt", "a", encoding="utf-8") as f:
+        f.write(message.text + "\n")
+    await message.answer("Спасибо! Ваше мнение сохранено.")
 
 @dp.message()
 async def any_message(message: types.Message):

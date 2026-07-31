@@ -7,16 +7,28 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
 TOKEN = "8833304083:AAE92ZCznJuNakic46jZNzTBoDkUigqMWFo"
 
+ADMIN_ID =  8144871993
+
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
-def save_order(user_id, username, service, amount):
+async def save_order(user_id, username, service, amount, bot):
     file_exists = os.path.isfile("orders.csv")
     with open("orders.csv", "a", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         if not file_exists:
             writer.writerow(["user_id", "username", "service", "amount", "status"])
         writer.writerow([user_id, username, service, amount, "pending"])
+
+    # Уведомление администратору
+    await bot.send_message(
+        ADMIN_ID,
+        f"🆕 Новый заказ!\n\n"
+        f"👤 Пользователь: @{username}\n"
+        f"📦 Услуга: {service}\n"
+        f"💰 Сумма: {amount} сом\n"
+        f"🆔 ID: {user_id}"
+    )
 
 @dp.message(Command("start"))
 async def start_command(message: types.Message):
@@ -95,7 +107,7 @@ async def feedback_button(message: types.Message):
 async def buy_housing(message: types.Message):
     user_id = message.from_user.id
     username = message.from_user.username or "unknown"
-    save_order(user_id, username, "Жильё", 5000)
+    await save_order(user_id, username, "Жильё", 5000, bot)
     await message.answer("✅ Ваш заказ сохранён. Скоро мы свяжемся с вами.")
 
 @dp.message()
@@ -120,6 +132,7 @@ def main_menu():
     return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
 
 async def main():
+    print(f"👤 Администратор: {ADMIN_ID}")
     await dp.start_polling(bot)
 
 if __name__ == "__main__":

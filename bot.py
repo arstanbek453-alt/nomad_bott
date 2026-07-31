@@ -33,6 +33,31 @@ async def get_feedback(message: types.Message):
     except FileNotFoundError:
         await message.answer("📭 Файл с мнениями пока не создан.")
 
+@dp.message(Command("schedule"))
+async def schedule_command(message: types.Message):
+    text = (
+        "📅 *Расписание Игр кочевников 2026*\n\n"
+        "🏔️ 31 августа — Открытие в Бишкеке\n"
+        "🚌 1 сентября — Переезд на Иссык-Куль\n"
+        "🏹 2–6 сентября — Основные соревнования\n"
+        "🎭 6 сентября — Закрытие в Чолпон-Ате\n\n"
+        "Подробное расписание будет добавляться по мере уточнения."
+    )
+    await message.answer(text, parse_mode="Markdown")
+
+@dp.message(Command("places"))
+async def places_command(message: types.Message):
+    text = (
+        "📍 *Главные локации Игр кочевников 2026*\n\n"
+        "🏔️ *Кырчын* — этногородок, главная площадка\n"
+        "🏟️ *Бишкек-Арена* — открытие 31 августа\n"
+        "🏞️ *Чолпон-Ата* — соревнования и закрытие\n"
+        "🎶 *Рух-Ордо* — культурная программа\n\n"
+        "Подробнее о каждой локации — в следующих обновлениях."
+    )
+    await message.answer(text, parse_mode="Markdown")
+
+
 @dp.message(lambda message: message.text == "📅 Расписание")
 async def schedule_button(message: types.Message):
     await message.answer("Расписание Игр кочевников будет добавлено позже.")

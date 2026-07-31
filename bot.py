@@ -137,7 +137,7 @@ async def places_command(message: types.Message):
 async def get_feedback(message: types.Message):
     try:
         with open("feedback.txt", "r", encoding="utf-8") as f:
-feedbacks = f.read()
+            feedbacks = f.read()
         if feedbacks.strip():
             await message.answer(f"📋 Сохранённые мнения:\n\n{feedbacks}")
         else:

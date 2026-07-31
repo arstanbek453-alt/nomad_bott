@@ -54,6 +54,7 @@ def main_menu():
         [KeyboardButton(text="💬 Оставить мнение")],
         [KeyboardButton(text="✨ Комплимент")],
         [KeyboardButton(text="🛒 Купить жильё")],
+        [KeyboardButton(text="🍶 Кымыз")],          # ← новая кнопка
         [KeyboardButton(text="📤 Поделиться")],
         [KeyboardButton(text="❓ Помощь")]
     ]
@@ -176,6 +177,31 @@ async def buy_housing(message: types.Message):
     username = message.from_user.username or "unknown"
     await save_order(user_id, username, "Жильё", 5000, bot)
     await message.answer("✅ Ваш заказ сохранён. Скоро мы свяжемся с вами.")
+
+@dp.message(lambda message: message.text == "🍶 Кымыз")
+async def kymyz_order(message: types.Message):
+    await message.answer(
+        "🍶 *Кымыз — напиток кочевников*\n\n"
+        "Полезный, освежающий, с тысячелетней историей.\n\n"
+        "Выберите объём:\n"
+        "1️⃣ 1 литр — 300 сом\n"
+        "2️⃣ 3 литра — 800 сом\n"
+        "3️⃣ 5 литров — 1200 сом\n\n"
+        "Напишите номер (1, 2 или 3), чтобы оформить заказ."
+    )
+
+@dp.message(lambda message: message.text in ["1", "2", "3"])
+async def kymyz_amount(message: types.Message):
+    amounts = {
+        "1": ("1 литр", 300),
+        "2": ("3 литра", 800),
+        "3": ("5 литров", 1200)
+    }
+    service, price = amounts[message.text]
+    user_id = message.from_user.id
+    username = message.from_user.username or "unknown"
+    await save_order(user_id, username, f"Кымыз ({service})", price, bot)
+    await message.answer(f"✅ Заказ на {service} кымыза оформлен!\nСумма: {price} сом.\nСкоро мы свяжемся с вами.")
 
 @dp.message(lambda message: message.text == "❓ Помощь")
 async def help_button(message: types.Message):

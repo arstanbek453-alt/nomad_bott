@@ -1,5 +1,6 @@
 import asyncio
 import os
+import csv
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
@@ -8,6 +9,14 @@ TOKEN = "8833304083:AAE92ZCznJuNakic46jZNzTBoDkUigqMWFo"
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
+
+def save_order(user_id, username, service, amount):
+    file_exists = os.path.isfile("orders.csv")
+    with open("orders.csv", "a", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        if not file_exists:
+            writer.writerow(["user_id", "username", "service", "amount", "status"])
+        writer.writerow([user_id, username, service, amount, "pending"])
 
 @dp.message(Command("start"))
 async def start_command(message: types.Message):
@@ -81,6 +90,13 @@ async def help_button(message: types.Message):
 @dp.message(lambda message: message.text == "💬 Оставить мнение")
 async def feedback_button(message: types.Message):
     await message.answer("Напишите своё мнение — я сохраню его.")
+
+@dp.message(lambda message: message.text == "🛒 Купить жильё")
+async def buy_housing(message: types.Message):
+    user_id = message.from_user.id
+    username = message.from_user.username or "unknown"
+    save_order(user_id, username, "Жильё", 5000)
+    await message.answer("✅ Ваш заказ сохранён. Скоро мы свяжемся с вами.")
 
 @dp.message()
 async def save_feedback(message: types.Message):

@@ -33,11 +33,18 @@ async def save_order(user_id, username, service, amount, bot):
 
 @dp.message(Command("start"))
 async def start_command(message: types.Message):
+    user_id = message.from_user.id
+    lang = user_language.get(user_id, "ru")
     name = message.from_user.first_name
-    await message.answer(
-        f"Привет, {name}! Я — NomadConnect.",
-        reply_markup=main_menu()
-    )
+
+    if lang == "kg":
+        text = f"🏔️ Салам, {name}! Мен — NomadConnect. Сизди көргөнүмө кубанычтуумун!"
+    elif lang == "en":
+        text = f"🏔️ Hello, {name}! I'm NomadConnect. Nice to see you!"
+    else:
+        text = f"🏔️ Привет, {name}! Я — NomadConnect. Рад тебя видеть!"
+
+    await message.answer(text, reply_markup=main_menu())
 
 @dp.message(Command("help"))
 async def help_command(message: types.Message):

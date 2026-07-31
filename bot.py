@@ -6,8 +6,8 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
-TOKEN = "8833304083:AAE92ZCznJUnAkic46jZNzTBoDkUiqgMWFo"
-ADMIN_ID = 8144871993 # Замени на свой Telegram ID
+TOKEN = "8833304083:AAE92ZCznJuNakic46jZNzTBoDkUigqMWFo"
+ADMIN_ID = 8144871993 
 
 def init_db():
     conn = sqlite3.connect("nomad_bot.db")

@@ -54,6 +54,7 @@ def main_menu():
         [KeyboardButton(text="💬 Оставить мнение")],
         [KeyboardButton(text="✨ Комплимент")],
         [KeyboardButton(text="🛒 Купить жильё")],
+        [KeyboardButton(text="📤 Поделиться")],
         [KeyboardButton(text="❓ Помощь")]
     ]
     return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
@@ -144,6 +145,14 @@ async def get_feedback(message: types.Message):
             await message.answer("📭 Пока нет мнений.")
     except FileNotFoundError:
         await message.answer("📭 Файл с мнениями пока не создан.")
+
+@dp.message(lambda message: message.text == "📤 Поделиться")
+async def share_bot(message: types.Message):
+    await message.answer(
+        "📤 Поделитесь ботом с друзьями!\n\n"
+        "Отправьте им ссылку:\n"
+        "https://t.me/NomadConnect_OfficialBot"
+    )
 
 @dp.message(lambda message: message.text == "📅 Расписание")
 async def schedule_button(message: types.Message):

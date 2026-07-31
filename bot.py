@@ -1,12 +1,46 @@
 import asyncio
 import csv
 import os
+import sqlite3
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
 TOKEN = "8833304083:AAE92ZCznJUnAkic46jZNzTBoDkUiqgMWFo"
-ADMIN_ID = 8144871993  # Замени на свой Telegram ID
+ADMIN_ID = 8144871993 # Замени на свой Telegram ID
+
+def init_db():
+    conn = sqlite3.connect("nomad_bot.db")
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            user_id INTEGER PRIMARY KEY,
+            username TEXT,
+            language TEXT,
+            registered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS orders (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            service TEXT,
+            amount INTEGER,
+            status TEXT DEFAULT 'pending',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS feedback (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            text TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    conn.commit()
+    conn.close()
+    print("✅ База данных инициализирована")
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
@@ -147,6 +181,7 @@ async def handle_all_messages(message: types.Message):
         await message.answer("Я пока учусь. Напиши /help, чтобы узнать команды.")
 
 async def main():
+    init_db()
     print("👤 Администратор:", ADMIN_ID)
     await dp.start_polling(bot)
 

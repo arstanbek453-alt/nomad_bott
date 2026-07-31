@@ -11,6 +11,7 @@ ADMIN_ID =  8144871993
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
+user_language = {}
 
 async def save_order(user_id, username, service, amount, bot):
     file_exists = os.path.isfile("orders.csv")
@@ -78,6 +79,16 @@ async def places_command(message: types.Message):
     )
     await message.answer(text, parse_mode="Markdown")
 
+@dp.message(Command("lang"))
+async def choose_language(message: types.Message):
+    buttons = [
+        [KeyboardButton(text="🇷🇺 Русский")],
+        [KeyboardButton(text="🇬🇧 English")],
+        [KeyboardButton(text="🇰🇬 Кыргызча")]
+    ]
+    markup = ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
+    await message.answer("Выберите язык / Тилди тандаңыз / Choose language:", reply_markup=markup)
+
 
 @dp.message(lambda message: message.text == "📅 Расписание")
 async def schedule_button(message: types.Message):
@@ -115,6 +126,17 @@ async def save_feedback(message: types.Message):
     with open("feedback.txt", "a", encoding="utf-8") as f:
         f.write(message.text + "\n")
     await message.answer("Спасибо! Ваше мнение сохранено.")
+
+@dp.message(lambda message: message.text in ["🇷🇺 Русский", "🇬🇧 English", "🇰🇬 Кыргызча"])
+async def set_language(message: types.Message):
+    lang = {
+        "🇷🇺 Русский": "ru",
+        "🇬🇧 English": "en",
+        "🇰🇬 Кыргызча": "kg"
+    }.get(message.text, "ru")
+    user_language[message.from_user.id] = lang
+    await message.answer(f"✅ Язык выбран: {message.text}")
+
 
 @dp.message()
 async def any_message(message: types.Message):

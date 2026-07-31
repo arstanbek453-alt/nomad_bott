@@ -126,7 +126,7 @@ def main_menu():
         [KeyboardButton(text="📍 Локации")],
         [KeyboardButton(text="💬 Оставить мнение")],
         [KeyboardButton(text="✨ Комплимент")],
-        [KeyboardButton(text="🛒 Купить жильё")],   # ← новая кнопка
+        [KeyboardButton(text="🛒 Купить жильё")],
         [KeyboardButton(text="❓ Помощь")]
     ]
     return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)

@@ -6,7 +6,7 @@ from aiogram.filters import Command
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
 TOKEN = "8833304083:AAE92ZCznJUnAkic46jZNzTBoDkUiqgMWFo"
-ADMIN_ID = 8144871993 # Замени на свой Telegram ID
+ADMIN_ID = 8144871993  # Замени на свой Telegram ID
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()

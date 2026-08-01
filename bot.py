@@ -82,7 +82,8 @@ def main_menu():
         [KeyboardButton(text="💬 Оставить мнение")],
         [KeyboardButton(text="✨ Комплимент")],
         [KeyboardButton(text="🛒 Купить жильё")],
-        [KeyboardButton(text="🍶 Кымыз")],          # ← новая кнопка
+        [KeyboardButton(text="🍶 Кымыз")],
+        [KeyboardButton(text="🗳 Голосование")],
         [KeyboardButton(text="📤 Поделиться")],
         [KeyboardButton(text="❓ Помощь")]
     ]

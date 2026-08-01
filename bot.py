@@ -309,6 +309,10 @@ async def kymyz_amount(message: types.Message):
     await save_order(user_id, username, f"Кымыз ({service})", price, bot)
     await message.answer(f"✅ Заказ на {service} кымыза оформлен!\nСумма: {price} сом.\nСкоро мы свяжемся с вами.")
 
+@dp.message(lambda message: message.text == "🗳 Голосование")
+async def vote_button(message: types.Message):
+    await vote_command(message)
+
 @dp.message(lambda message: message.text == "❓ Помощь")
 async def help_button(message: types.Message):
     await help_command(message)

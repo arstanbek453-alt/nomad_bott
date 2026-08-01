@@ -188,6 +188,32 @@ async def vote_command(message: types.Message):
         conn.close()
         return
 
+@dp.message(Command("results"))
+async def results_command(message: types.Message):
+    conn = sqlite3.connect("nomad_bot.db")
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT c.name, COUNT(v.candidate_id) as votes
+        FROM candidates c
+        LEFT JOIN votes v ON c.id = v.candidate_id
+        GROUP BY c.id
+        ORDER BY votes DESC
+    """)
+    results = cursor.fetchall()
+    conn.close()
+
+    if not results or all(r[1] == 0 for r in results):
+        await message.answer("📭 Пока нет голосов. Станьте первым — напишите /vote")
+        return
+
+    text = "📊 *Результаты голосования:*\n\n"
+    for name, count in results:
+        text += f"{name}: {count} голосов\n"
+
+    await message.answer(text, parse_mode="Markdown")
+
+
     cursor.execute("SELECT id, name FROM candidates")
     candidates = cursor.fetchall()
     conn.close()

@@ -5,6 +5,7 @@ import sqlite3
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 TOKEN = "8833304083:AAE92ZCznJuNakic46jZNzTBoDkUigqMWFo"
 ADMIN_ID = 8144871993 

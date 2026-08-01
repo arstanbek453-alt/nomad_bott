@@ -12,6 +12,8 @@ ADMIN_ID = 8144871993
 def init_db():
     conn = sqlite3.connect("nomad_bot.db")
     cursor = conn.cursor()
+
+    # --- ТАБЛИЦЫ, КОТОРЫЕ УЖЕ БЫЛИ ---
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
             user_id INTEGER PRIMARY KEY,
@@ -20,6 +22,7 @@ def init_db():
             registered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS orders (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -30,6 +33,7 @@ def init_db():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS feedback (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -38,6 +42,29 @@ def init_db():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
+
+    # --- НОВЫЕ ТАБЛИЦЫ ДЛЯ ГОЛОСОВАНИЯ ---
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS candidates (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT UNIQUE
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS votes (
+            user_id INTEGER,
+            candidate_id INTEGER,
+            FOREIGN KEY (candidate_id) REFERENCES candidates(id),
+            PRIMARY KEY (user_id, candidate_id)
+        )
+    """)
+
+    # --- ДОБАВЛЯЕМ СТРАНЫ (ТОЛЬКО ЕСЛИ ИХ ЕЩЁ НЕТ) ---
+    countries = ["🇰🇬 Кыргызстан", "🇰🇿 Казахстан", "🇹🇷 Турция", "🇲🇳 Монголия", "🇺🇿 Узбекистан"]
+    for country in countries:
+        cursor.execute("INSERT OR IGNORE INTO candidates (name) VALUES (?)", (country,))
+
     conn.commit()
     conn.close()
     print("✅ База данных инициализирована")

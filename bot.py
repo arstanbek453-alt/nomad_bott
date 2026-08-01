@@ -175,6 +175,35 @@ async def get_feedback(message: types.Message):
     except FileNotFoundError:
         await message.answer("📭 Файл с мнениями пока не создан.")
 
+@dp.message(Command("vote"))
+async def vote_command(message: types.Message):
+    conn = sqlite3.connect("nomad_bot.db")
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT COUNT(*) FROM votes WHERE user_id = ?", (message.from_user.id,))
+    count = cursor.fetchone()[0]
+
+    if count > 0:
+        await message.answer("✅ Вы уже проголосовали. Спасибо за участие!")
+        conn.close()
+        return
+
+    cursor.execute("SELECT id, name FROM candidates")
+    candidates = cursor.fetchall()
+    conn.close()
+
+    buttons = [
+        [InlineKeyboardButton(text=name, callback_data=f"vote_{id}")]
+        for id, name in candidates
+    ]
+    keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
+
+    await message.answer(
+        "🗳 *Выберите страну, которая должна провести следующие Игры кочевников:*",
+        reply_markup=keyboard,
+        parse_mode="Markdown"
+    )
+
 @dp.message(lambda message: message.text == "📤 Поделиться")
 async def share_bot(message: types.Message):
     await message.answer(

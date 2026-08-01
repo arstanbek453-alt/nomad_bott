@@ -188,6 +188,44 @@ async def vote_command(message: types.Message):
         conn.close()
         return
 
+    cursor.execute("SELECT id, name FROM candidates")
+    candidates = cursor.fetchall()
+    conn.close()
+
+    buttons = [
+        [InlineKeyboardButton(text=name, callback_data=f"vote_{id}")]
+        for id, name in candidates
+    ]
+    keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
+
+    await message.answer(
+        "🗳 *Выберите страну, которая должна провести следующие Игры кочевников:*",
+        reply_markup=keyboard,
+        parse_mode="Markdown"
+    )
+
+@dp.callback_query(lambda c: c.data.startswith("vote_"))
+async def process_vote(callback: types.CallbackQuery):
+    candidate_id = int(callback.data.split("_")[1])
+
+    conn = sqlite3.connect("nomad_bot.db")
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT COUNT(*) FROM votes WHERE user_id = ?", (callback.from_user.id,))
+    count = cursor.fetchone()[0]
+
+    if count > 0:
+        await callback.answer("Вы уже голосовали!", show_alert=True)
+        conn.close()
+        return
+
+    cursor.execute("INSERT INTO votes (user_id, candidate_id) VALUES (?, ?)", (callback.from_user.id, candidate_id))
+    conn.commit()
+    conn.close()
+
+    await callback.answer("✅ Ваш голос учтён!", show_alert=True)
+    await callback.message.edit_text("🗳 Спасибо за участие в голосовании!")
+
 @dp.message(Command("results"))
 async def results_command(message: types.Message):
     conn = sqlite3.connect("nomad_bot.db")
@@ -213,22 +251,6 @@ async def results_command(message: types.Message):
 
     await message.answer(text, parse_mode="Markdown")
 
-
-    cursor.execute("SELECT id, name FROM candidates")
-    candidates = cursor.fetchall()
-    conn.close()
-
-    buttons = [
-        [InlineKeyboardButton(text=name, callback_data=f"vote_{id}")]
-        for id, name in candidates
-    ]
-    keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
-
-    await message.answer(
-        "🗳 *Выберите страну, которая должна провести следующие Игры кочевников:*",
-        reply_markup=keyboard,
-        parse_mode="Markdown"
-    )
 
 @dp.message(lambda message: message.text == "📤 Поделиться")
 async def share_bot(message: types.Message):

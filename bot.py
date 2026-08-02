@@ -9,7 +9,7 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 TOKEN = "8833304083:AAE92ZCznJuNakic46jZNzTBoDkUigqMWFo"
 ADMIN_ID = 8144871993
-housing_data = {}
+housing_data = {} 
 
 def init_db():
     conn = sqlite3.connect("/data/nomad_bot.db")
@@ -341,19 +341,25 @@ async def housing_form(message: types.Message):
     user_id = message.from_user.id
     if user_id not in housing_data:
         return
-    step = len(housing_data[user_id])
+
+    data = housing_data[user_id]
+    step = data.get("step", 0)  # получаем текущий шаг, по умолчанию 0
+
     if step == 0:
-        housing_data[user_id]["location"] = message.text
+        data["location"] = message.text
+        data["step"] = 1
         await message.answer("👥 Сколько человек может разместиться?")
     elif step == 1:
-        housing_data[user_id]["capacity"] = message.text
+        data["capacity"] = message.text
+        data["step"] = 2
         await message.answer("💰 Цена за ночь (в сомах):")
     elif step == 2:
-        housing_data[user_id]["price"] = message.text
+        data["price"] = message.text
+        data["step"] = 3
         await message.answer("📞 Ваш номер телефона:")
     elif step == 3:
-        housing_data[user_id]["contact"] = message.text
-        data = housing_data[user_id]
+        data["contact"] = message.text
+        data["step"] = 4
         await message.answer(
             f"📋 Проверьте данные:\n\n"
             f"📍 Локация: {data['location']}\n"
@@ -362,22 +368,21 @@ async def housing_form(message: types.Message):
             f"📞 Контакт: {data['contact']}\n\n"
             f"Всё верно? Напишите «Да» или «Нет»"
         )
-        housing_data[user_id]["step"] = "confirm"
-        await message.answer(f"🔍 Текущий шаг: {step}, текст: {message.text}")
-    elif step == 4 and message.text.strip().lower() in ["да", "д", "yes", "y"]:
-        data = housing_data[user_id]
-        conn = sqlite3.connect("/data/nomad_bot.db")
-        cursor = conn.cursor()
-        cursor.execute(
-            "INSERT INTO housing (location, capacity, price, contact) VALUES (?, ?, ?, ?)",
-            (data["location"], data["capacity"], data["price"], data["contact"])
-        )
-        conn.commit()
-        conn.close()
-        await message.answer("✅ Объявление сохранено!")
-        del housing_data[user_id]
-    else:
-        await message.answer("Начните заново через кнопку «🏠 Сдать жильё»")
+    elif step == 4:
+        if message.text.lower() in ["да", "д", "yes", "y"]:
+            conn = sqlite3.connect("/data/nomad_bot.db")
+            cursor = conn.cursor()
+            cursor.execute(
+                "INSERT INTO housing (location, capacity, price, contact) VALUES (?, ?, ?, ?)",
+                (data["location"], data["capacity"], data["price"], data["contact"])
+            )
+            conn.commit()
+            conn.close()
+            await message.answer("✅ Объявление сохранено!")
+            del housing_data[user_id]
+        else:
+            await message.answer("Начните заново через кнопку «🏠 Сдать жильё»")
+            del housing_data[user_id]
 
 @dp.message(lambda message: message.text and not message.text.startswith("/"))
 async def save_feedback(message: types.Message):

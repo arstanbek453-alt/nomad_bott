@@ -292,6 +292,7 @@ async def compliment_button(message: types.Message):
 
 @dp.message(lambda message: message.text == "🏠 Найти жильё")
 async def buy_housing(message: types.Message):
+    await message.answer("🏠 Список жилья скоро появится. А пока можете оставить заявку через /feedback")
 
 @dp.message(lambda message: message.text == "🍶 Кымыз")
 async def kymyz_order(message: types.Message):

@@ -330,12 +330,6 @@ async def vote_button(message: types.Message):
 async def help_button(message: types.Message):
     await help_command(message)
 
-@dp.message(lambda message: message.text and not message.text.startswith("/"))
-async def save_feedback(message: types.Message):
-    with open("/data/feedback.txt", "a", encoding="utf-8") as f:
-        f.write(message.text + "\n")
-    await message.answer("🌾 Спасибо! Ваше мнение сохранено.")
-
 @dp.message(lambda message: message.text == "🏠 Сдать жильё")
 async def add_housing_start(message: types.Message):
     user_id = message.from_user.id
@@ -383,6 +377,12 @@ async def housing_form(message: types.Message):
         del housing_data[user_id]
     else:
         await message.answer("Начните заново через кнопку «🏠 Сдать жильё»")
+
+@dp.message(lambda message: message.text and not message.text.startswith("/"))
+async def save_feedback(message: types.Message):
+    with open("/data/feedback.txt", "a", encoding="utf-8") as f:
+        f.write(message.text + "\n")
+    await message.answer("🌾 Спасибо! Ваше мнение сохранено.")
 
 @dp.message()
 async def handle_all_messages(message: types.Message):

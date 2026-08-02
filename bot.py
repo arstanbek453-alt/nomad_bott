@@ -363,7 +363,7 @@ async def housing_form(message: types.Message):
             f"Всё верно? Напишите «Да» или «Нет»"
         )
         housing_data[user_id]["step"] = "confirm"
-    elif step == 4 and message.text.lower() == "да":
+    elif step == 4 and message.text.strip().lower() in ["да", "д", "yes", "y"]:
         data = housing_data[user_id]
         conn = sqlite3.connect("/data/nomad_bot.db")
         cursor = conn.cursor()

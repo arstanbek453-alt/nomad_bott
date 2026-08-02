@@ -11,7 +11,7 @@ TOKEN = "8833304083:AAE92ZCznJuNakic46jZNzTBoDkUigqMWFo"
 ADMIN_ID = 8144871993 
 
 def init_db():
-    conn = sqlite3.connect("nomad_bot.db")
+    conn = sqlite3.connect("/data/nomad_bot.db")
     cursor = conn.cursor()
 
     # --- ТАБЛИЦЫ, КОТОРЫЕ УЖЕ БЫЛИ ---
@@ -90,8 +90,8 @@ def main_menu():
     return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
 
 async def save_order(user_id, username, service, amount, bot):
-    file_exists = os.path.isfile("orders.csv")
-    with open("orders.csv", "a", newline="", encoding="utf-8") as f:
+    file_exists = os.path.isfile("/data/orders.csv")
+    with open("/data/orders.csv", "a", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         if not file_exists:
             writer.writerow(["user_id", "username", "service", "amount", "status"])
@@ -167,7 +167,7 @@ async def places_command(message: types.Message):
 @dp.message(Command("getfeedback"))
 async def get_feedback(message: types.Message):
     try:
-        with open("feedback.txt", "r", encoding="utf-8") as f:
+        with open("/data/feedback.txt", "r", encoding="utf-8") as f:
             feedbacks = f.read()
         if feedbacks.strip():
             await message.answer(f"📋 Сохранённые мнения:\n\n{feedbacks}")
@@ -178,7 +178,7 @@ async def get_feedback(message: types.Message):
 
 @dp.message(Command("vote"))
 async def vote_command(message: types.Message):
-    conn = sqlite3.connect("nomad_bot.db")
+    conn = sqlite3.connect("/data/nomad_bot.db")
     cursor = conn.cursor()
 
     cursor.execute("SELECT COUNT(*) FROM votes WHERE user_id = ?", (message.from_user.id,))
@@ -209,7 +209,7 @@ async def vote_command(message: types.Message):
 async def process_vote(callback: types.CallbackQuery):
     candidate_id = int(callback.data.split("_")[1])
 
-    conn = sqlite3.connect("nomad_bot.db")
+    conn = sqlite3.connect("/data/nomad_bot.db")
     cursor = conn.cursor()
 
     cursor.execute("SELECT COUNT(*) FROM votes WHERE user_id = ?", (callback.from_user.id,))
@@ -229,7 +229,7 @@ async def process_vote(callback: types.CallbackQuery):
 
 @dp.message(Command("results"))
 async def results_command(message: types.Message):
-    conn = sqlite3.connect("nomad_bot.db")
+    conn = sqlite3.connect("/data/nomad_bot.db")
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -322,7 +322,7 @@ async def help_button(message: types.Message):
 
 @dp.message(lambda message: message.text and not message.text.startswith("/"))
 async def save_feedback(message: types.Message):
-    with open("feedback.txt", "a", encoding="utf-8") as f:
+    with open("/data/feedback.txt", "a", encoding="utf-8") as f:
         f.write(message.text + "\n")
     await message.answer("🌾 Спасибо! Ваше мнение сохранено.")
 

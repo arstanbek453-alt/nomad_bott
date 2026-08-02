@@ -93,7 +93,7 @@ def main_menu():
         [KeyboardButton(text="📍 Локации")],
         [KeyboardButton(text="💬 Оставить мнение")],
         [KeyboardButton(text="✨ Комплимент")],
-        [KeyboardButton(text="🛒 Купить жильё")],
+        [KeyboardButton(text="🏠 Найти жильё")],
         [KeyboardButton(text="🏠 Сдать жильё")],
         [KeyboardButton(text="🍶 Кымыз")],
         [KeyboardButton(text="🗳 Голосование")],
@@ -290,12 +290,8 @@ async def feedback_button(message: types.Message):
 async def compliment_button(message: types.Message):
     await message.answer("✨ Ты сегодня отлично выглядишь!")
 
-@dp.message(lambda message: message.text == "🛒 Купить жильё")
+@dp.message(lambda message: message.text == "🏠 Найти жильё")
 async def buy_housing(message: types.Message):
-    user_id = message.from_user.id
-    username = message.from_user.username or "unknown"
-    await save_order(user_id, username, "Жильё", 5000, bot)
-    await message.answer("✅ Ваш заказ сохранён. Скоро мы свяжемся с вами.")
 
 @dp.message(lambda message: message.text == "🍶 Кымыз")
 async def kymyz_order(message: types.Message):

@@ -287,27 +287,30 @@ async def buy_housing(message: types.Message):
 @dp.message(lambda message: message.text == "🍶 Кымыз")
 async def kymyz_order(message: types.Message):
     await message.answer(
-        "🍶 *Кымыз — напиток кочевников*\n\n"
-        "Полезный, освежающий, с тысячелетней историей.\n\n"
+        "🍶 *Кымыз от Бекдияра*\n\n"
+        "Свежий, натуральный, с доставкой.\n\n"
         "Выберите объём:\n"
         "1️⃣ 1 литр — 300 сом\n"
         "2️⃣ 3 литра — 800 сом\n"
         "3️⃣ 5 литров — 1200 сом\n\n"
-        "Напишите номер (1, 2 или 3), чтобы оформить заказ."
+        "После выбора я дам вам номер Бекдияра — он свяжется с вами."
     )
 
 @dp.message(lambda message: message.text in ["1", "2", "3"])
 async def kymyz_amount(message: types.Message):
     amounts = {
-        "1": ("1 литр", 300),
-        "2": ("3 литра", 800),
-        "3": ("5 литров", 1200)
+        "1": "1 литр",
+        "2": "3 литра",
+        "3": "5 литров"
     }
-    service, price = amounts[message.text]
-    user_id = message.from_user.id
-    username = message.from_user.username or "unknown"
-    await save_order(user_id, username, f"Кымыз ({service})", price, bot)
-    await message.answer(f"✅ Заказ на {service} кымыза оформлен!\nСумма: {price} сом.\nСкоро мы свяжемся с вами.")
+    service = amounts[message.text]
+    await message.answer(
+        f"✅ Вы выбрали {service} кымыза.\n\n"
+        f"📞 Свяжитесь с Бекдияром:\n"
+        f"<b>+996 221 20-88-64</b>\n\n"
+        f"Он уточнит детали и организует доставку.",
+        parse_mode="HTML"
+    )
 
 @dp.message(lambda message: message.text == "🗳 Голосование")
 async def vote_button(message: types.Message):

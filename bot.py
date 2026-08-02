@@ -320,6 +320,12 @@ async def vote_button(message: types.Message):
 async def help_button(message: types.Message):
     await help_command(message)
 
+@dp.message(lambda message: message.text and not message.text.startswith("/"))
+async def save_feedback(message: types.Message):
+    with open("feedback.txt", "a", encoding="utf-8") as f:
+        f.write(message.text + "\n")
+    await message.answer("🌾 Спасибо! Ваше мнение сохранено.")
+
 @dp.message()
 async def handle_all_messages(message: types.Message):
     user_id = message.from_user.id

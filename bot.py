@@ -89,6 +89,7 @@ user_language = {}
 
 def main_menu():
     buttons = [
+        [KeyboardButton(text="📖 История о нас")],
         [KeyboardButton(text="📅 Расписание")],
         [KeyboardButton(text="📍 Локации")],
         [KeyboardButton(text="💬 Оставить мнение")],
@@ -285,6 +286,29 @@ async def places_button(message: types.Message):
 @dp.message(lambda message: message.text == "💬 Оставить мнение")
 async def feedback_button(message: types.Message):
     await message.answer("📝 Напишите своё мнение — я сохраню его.")
+
+@dp.message(lambda message: message.text == "📖 История о нас")
+async def about_story(message: types.Message):
+    text = (
+        "🏔️ *История Барсбека*\n\n"
+        "🇷🇺 *Русский:*\n"
+        "В горах Тянь-Шаня жил молодой ирбис по имени Барсбек. Он был силён, быстр и бесстрашен. Каждый день он смотрел вниз, на долину, и слышал звуки — топот коней, песни людей, смех и крики.\n\n"
+        "Ему стало интересно: что там, внизу? Он спустился с гор, чтобы увидеть своими глазами, на что способны люди. Он увидел всадников, летящих по степи, лучников, стреляющих без промаха, борцов, сражающихся с достоинством.\n\n"
+        "Ирбис понял: люди такие же сильные, как и он. Он остался, чтобы смотреть, учиться и запоминать. И теперь он рассказывает об этом вам.\n\n"
+        "🌾 *Ты — часть этой истории. Добро пожаловать в мир кочевников.*\n\n"
+        "🇰🇬 *Кыргызча:*\n"
+        "Тянь-Шань тоолорунда Барсбек аттуу жигит илбирс жашаптыр. Ал күчтүү, шамдагай жана коркпогон болчу. Күн сайын ал өрөөнгө карап, аттардын тепкисин, адамдардын ырларын, күлкүсүн угуп турчу.\n\n"
+        "Ал кызыгып, төмөн түшүп, адамдардын эмнеге жарамдуу экенин көргүсү келди. Ал чабандестерди, мергендерди, балбандарды көрдү.\n\n"
+        "Илбирс түшүндү: адамдар да анын сыяктуу күчтүү. Ал калып, көрүп, үйрөнүп, эстеп калды. Эми ал силерге ошол жөнүндө айтып жатат.\n\n"
+        "🌾 *Сен да бул тарыхтын бөлүгүсүң. Көчмөндөр дүйнөсүнө кош келиңиз!*\n\n"
+        "🇬🇧 *English:*\n"
+        "In the mountains of Tien Shan lived a young snow leopard named Barsbek. He was strong, fast, and fearless. Every day he looked down at the valley and heard the sounds — the hooves of horses, songs of people, laughter and shouts.\n\n"
+        "He became curious: what is down there? He came down from the mountains to see with his own eyes what people are capable of. He saw riders flying across the steppe, archers shooting without missing, wrestlers fighting with dignity.\n\n"
+        "The snow leopard understood: people are just as strong as he is. He stayed to watch, learn, and remember. And now he tells you about it.\n\n"
+        "🌾 *You are part of this story. Welcome to the world of nomads.*"
+    )
+    await message.answer(text, parse_mode="Markdown")
+
 
 @dp.message(lambda message: message.text == "✨ Комплимент")
 async def compliment_button(message: types.Message):

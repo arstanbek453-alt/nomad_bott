@@ -122,6 +122,19 @@ async def save_order(user_id, username, service, amount, bot):
 @dp.message(Command("start"))
 async def start_command(message: types.Message):
     user_id = message.from_user.id
+    username = message.from_user.username or "unknown"
+
+    conn = sqlite3.connect("/data/nomad_bot.db")
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT OR IGNORE INTO users (user_id, username) VALUES (?, ?)",
+        (user_id, username)
+    )
+    conn.commit()
+    conn.close()
+    
+async def start_command(message: types.Message):
+    user_id = message.from_user.id
     lang = user_language.get(user_id, "ru")
     name = message.from_user.first_name
     if lang == "kg":
@@ -218,6 +231,20 @@ async def vote_command(message: types.Message):
         reply_markup=keyboard,
         parse_mode="Markdown"
     )
+
+@dp.message(Command("stats"))
+async def stats_command(message: types.Message):
+    if message.from_user.id != ADMIN_ID:
+        await message.answer("⛔ Доступно только администратору.")
+        return
+
+    conn = sqlite3.connect("/data/nomad_bot.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM users")
+    count = cursor.fetchone()[0]
+    conn.close()
+
+    await message.answer(f"👥 Всего пользователей: {count}")
 
 @dp.callback_query(lambda c: c.data.startswith("vote_"))
 async def process_vote(callback: types.CallbackQuery):

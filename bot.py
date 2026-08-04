@@ -454,8 +454,8 @@ async def handle_all_messages(message: types.Message):
                 conn = sqlite3.connect("/data/nomad_bot.db")
                 cursor = conn.cursor()
                 cursor.execute(
-                    "INSERT INTO housing (location, region, capacity, price, contact) VALUES (?, ?, ?, ?, ?)",
-                    (data["location"], data["region"], data["capacity"], data["price"], data["contact"])
+                    "INSERT INTO housing (user_id, location, region, capacity, price, contact) VALUES (?, ?, ?, ?, ?, ?)",
+                    (user_id, data["location"], data["region"], data["capacity"], data["price"], data["contact"])
                 )
                 conn.commit()
                 conn.close()

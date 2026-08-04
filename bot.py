@@ -237,20 +237,59 @@ async def about_story(message: types.Message):
     )
     await message.answer(text, parse_mode="Markdown")
 
+search_data = {}
+
 @dp.message(lambda message: message.text == "🏠 Найти жильё")
-async def find_housing(message: types.Message):
+async def start_search(message: types.Message):
+    user_id = message.from_user.id
+    search_data[user_id] = {"step": "region"}
+    await message.answer("📍 Выберите регион:", reply_markup=region_buttons())
+
+@dp.message(lambda message: message.text in [
+    "🏙️ Бишкек", "🏙️ Ош", "🏞️ Иссык-Куль (Север)", "🏞️ Иссык-Куль (Юг)",
+    "🌾 Чуй", "🌿 Талас", "🌄 Джалал-Абад", "🏜️ Баткен"
+] and message.from_user.id in search_data)
+async def search_region(message: types.Message):
+    user_id = message.from_user.id
+    search_data[user_id]["region"] = message.text
+    search_data[user_id]["step"] = "capacity"
+    await message.answer("👥 Сколько человек должно поместиться?", reply_markup=ReplyKeyboardRemove())
+
+@dp.message(lambda message: message.text.isdigit() and message.from_user.id in search_data and search_data[message.from_user.id].get("step") == "capacity")
+async def search_capacity(message: types.Message):
+    user_id = message.from_user.id
+    search_data[user_id]["capacity"] = int(message.text)
+    search_data[user_id]["step"] = "price"
+    await message.answer("💰 Максимальная цена за ночь (в сомах):")
+
+@dp.message(lambda message: message.text.isdigit() and message.from_user.id in search_data and search_data[message.from_user.id].get("step") == "price")
+async def search_price(message: types.Message):
+    user_id = message.from_user.id
+    search_data[user_id]["price"] = int(message.text)
+
+    region = search_data[user_id]["region"]
+    capacity = search_data[user_id]["capacity"]
+    price = search_data[user_id]["price"]
+
     conn = sqlite3.connect("/data/nomad_bot.db")
     cursor = conn.cursor()
-    cursor.execute("SELECT location, capacity, price, contact FROM housing ORDER BY id DESC")
+    cursor.execute("""
+        SELECT location, capacity, price, contact FROM housing
+        WHERE region = ? AND capacity >= ? AND price <= ?
+        ORDER BY price ASC
+    """, (region, capacity, price))
     results = cursor.fetchall()
     conn.close()
+
     if not results:
-        await message.answer("🏠 Пока нет объявлений.")
-        return
-    text = "🏠 *Доступное жильё:*\n\n"
-    for i, row in enumerate(results, 1):
-        text += f"{i}. 📍 {row[0]}\n👥 {row[1]} чел.\n💰 {row[2]} сом/ночь\n📞 {row[3]}\n\n"
-    await message.answer(text, parse_mode="Markdown")
+        await message.answer("🏠 По вашему запросу ничего не найдено.")
+    else:
+        text = "🏠 *Найденные варианты:*\n\n"
+        for i, row in enumerate(results, 1):
+            text += f"{i}. 📍 {row[0]}\n👥 {row[1]} чел.\n💰 {row[2]} сом/ночь\n📞 {row[3]}\n\n"
+        await message.answer(text, parse_mode="Markdown")
+
+    del search_data[user_id]
 
 @dp.message(lambda message: message.text == "🏠 Сдать жильё")
 async def add_housing_start(message: types.Message):

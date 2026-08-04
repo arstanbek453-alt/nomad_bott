@@ -19,7 +19,7 @@ search_data = {}
 delete_data = {}
 
 def init_db():
-    conn = sqlite3.connect("/data/nomad_bot.db")
+    conn = sqlite3.connect("/data/nomad_bot_new.db")
     cursor = conn.cursor()
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
@@ -122,7 +122,7 @@ def region_buttons():
 async def start_command(message: types.Message):
     user_id = message.from_user.id
     username = message.from_user.username or "unknown"
-    conn = sqlite3.connect("/data/nomad_bot.db")
+    conn = sqlite3.connect("/data/nomad_bot_new.db")
     cursor = conn.cursor()
     cursor.execute("INSERT OR IGNORE INTO users (user_id, username) VALUES (?, ?)", (user_id, username))
     conn.commit()
@@ -136,7 +136,7 @@ async def help_command(message: types.Message):
 
 @dp.message(Command("vote"))
 async def vote_command(message: types.Message):
-    conn = sqlite3.connect("/data/nomad_bot.db")
+    conn = sqlite3.connect("/data/nomad_bot_new.db")
     cursor = conn.cursor()
     cursor.execute("SELECT COUNT(*) FROM votes WHERE user_id = ?", (message.from_user.id,))
     count = cursor.fetchone()[0]
@@ -154,7 +154,7 @@ async def vote_command(message: types.Message):
 @dp.callback_query(lambda c: c.data.startswith("vote_"))
 async def process_vote(callback: types.CallbackQuery):
     candidate_id = int(callback.data.split("_")[1])
-    conn = sqlite3.connect("/data/nomad_bot.db")
+    conn = sqlite3.connect("/data/nomad_bot_new.db")
     cursor = conn.cursor()
     cursor.execute("SELECT COUNT(*) FROM votes WHERE user_id = ?", (callback.from_user.id,))
     count = cursor.fetchone()[0]
@@ -170,7 +170,7 @@ async def process_vote(callback: types.CallbackQuery):
 
 @dp.message(Command("results"))
 async def results_command(message: types.Message):
-    conn = sqlite3.connect("/data/nomad_bot.db")
+    conn = sqlite3.connect("/data/nomad_bot_new.db")
     cursor = conn.cursor()
     cursor.execute("""
         SELECT c.name, COUNT(v.candidate_id) as votes
@@ -233,7 +233,7 @@ async def search_price(message: types.Message):
     region = search_data[user_id]["region"]
     capacity = search_data[user_id]["capacity"]
     price = search_data[user_id]["price"]
-    conn = sqlite3.connect("/data/nomad_bot.db")
+    conn = sqlite3.connect("/data/nomad_bot_new.db")
     cursor = conn.cursor()
     cursor.execute("""
         SELECT location, capacity, price, contact FROM housing
@@ -261,7 +261,7 @@ async def add_housing_start(message: types.Message):
 @dp.message(lambda message: message.text == "🗑️ Удалить объявление")
 async def delete_housing_start(message: types.Message):
     user_id = message.from_user.id
-    conn = sqlite3.connect("/data/nomad_bot.db")
+    conn = sqlite3.connect("/data/nomad_bot_new.db")
     cursor = conn.cursor()
     cursor.execute("SELECT id, location, price FROM housing WHERE user_id = ?", (user_id,))
     results = cursor.fetchall()
@@ -280,7 +280,7 @@ async def delete_housing_start(message: types.Message):
 async def delete_housing_confirm(message: types.Message):
     user_id = message.from_user.id
     listing_id = int(message.text)
-    conn = sqlite3.connect("/data/nomad_bot.db")
+    conn = sqlite3.connect("/data/nomad_bot_new.db")
     cursor = conn.cursor()
     cursor.execute("SELECT user_id FROM housing WHERE id = ?", (listing_id,))
     result = cursor.fetchone()
@@ -291,7 +291,7 @@ async def delete_housing_confirm(message: types.Message):
     if result[0] != user_id:
         await message.answer("⛔ Это объявление принадлежит другому пользователю.")
         return
-    conn = sqlite3.connect("/data/nomad_bot.db")
+    conn = sqlite3.connect("/data/nomad_bot_new.db")
     cursor = conn.cursor()
     cursor.execute("DELETE FROM housing WHERE id = ?", (listing_id,))
     conn.commit()
@@ -317,7 +317,7 @@ async def save_booking(message: types.Message):
     user_id = message.from_user.id
     days = int(message.text)
     listing_id = booking_data[user_id]["listing_id"]
-    conn = sqlite3.connect("/data/nomad_bot.db")
+    conn = sqlite3.connect("/data/nomad_bot_new.db")
     cursor = conn.cursor()
     cursor.execute("SELECT contact, location FROM housing WHERE id = ?", (listing_id,))
     result = cursor.fetchone()
@@ -326,7 +326,7 @@ async def save_booking(message: types.Message):
         await message.answer("❌ Объявление не найдено.")
         return
     host_contact, location = result
-    conn = sqlite3.connect("/data/nomad_bot.db")
+    conn = sqlite3.connect("/data/nomad_bot_new.db")
     cursor = conn.cursor()
     cursor.execute(
         "INSERT INTO bookings (guest_id, guest_username, host_contact, location, days) VALUES (?, ?, ?, ?, ?)",
@@ -387,7 +387,7 @@ async def handle_all_messages(message: types.Message):
             )
         elif step == 4:
             if message.text.lower() in ["да", "д", "yes", "y"]:
-                conn = sqlite3.connect("/data/nomad_bot.db")
+                conn = sqlite3.connect("/data/nomad_bot_new.db")
                 cursor = conn.cursor()
                 cursor.execute(
                     "INSERT INTO housing (user_id, location, region, capacity, price, contact) VALUES (?, ?, ?, ?, ?, ?)",

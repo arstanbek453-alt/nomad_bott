@@ -8,7 +8,7 @@ from aiogram.filters import Command
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove, InlineKeyboardButton, InlineKeyboardMarkup
 
 TOKEN = "8833304083:AAE92ZCznJUnAkic46jZNzTBoDkUiqgMWFo"
-ADMIN_ID = 123456789  # Замени на свой ID
+ADMIN_ID = 8144871993  # Замени на свой ID
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()

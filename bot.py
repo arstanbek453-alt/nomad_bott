@@ -18,7 +18,7 @@ booking_data = {}
 
 # ---- БАЗА ДАННЫХ ----
 def init_db():
-    conn = sqlite3.connect("/data/nomad_bot.db")
+    conn = sqlite3.connect("nomad_bot.db")
     cursor = conn.cursor()
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
@@ -83,7 +83,7 @@ def region_buttons():
 @dp.message(Command("start"))
 async def start_command(message: types.Message):
     user_id = message.from_user.id
-    conn = sqlite3.connect("/data/nomad_bot.db")
+    conn = sqlite3.connect("nomad_bot.db")
     cursor = conn.cursor()
     cursor.execute("INSERT OR IGNORE INTO users (user_id, username) VALUES (?, ?)", (user_id, message.from_user.username or "unknown"))
     conn.commit()
@@ -122,7 +122,7 @@ async def search_price(message: types.Message):
     region = search_data[user_id]["region"]
     capacity = search_data[user_id]["capacity"]
     price = search_data[user_id]["price"]
-    conn = sqlite3.connect("/data/nomad_bot.db")
+    conn = sqlite3.connect("nomad_bot.db")
     cursor = conn.cursor()
     cursor.execute("SELECT location, capacity, price, contact FROM housing WHERE region = ? AND capacity >= ? AND price <= ?", (region, capacity, price))
     results = cursor.fetchall()
@@ -147,7 +147,7 @@ async def add_housing_start(message: types.Message):
 @dp.message(lambda message: message.text == "🗑️ Удалить объявление")
 async def delete_housing_start(message: types.Message):
     user_id = message.from_user.id
-    conn = sqlite3.connect("/data/nomad_bot.db")
+    conn = sqlite3.connect("nomad_bot.db")
     cursor = conn.cursor()
     cursor.execute("SELECT id, location, price FROM housing WHERE user_id = ?", (user_id,))
     results = cursor.fetchall()
@@ -166,7 +166,7 @@ async def delete_housing_start(message: types.Message):
 async def delete_housing_confirm(message: types.Message):
     user_id = message.from_user.id
     listing_id = int(message.text)
-    conn = sqlite3.connect("/data/nomad_bot.db")
+    conn = sqlite3.connect("nomad_bot.db")
     cursor = conn.cursor()
     cursor.execute("SELECT user_id FROM housing WHERE id = ?", (listing_id,))
     result = cursor.fetchone()
@@ -174,7 +174,7 @@ async def delete_housing_confirm(message: types.Message):
     if not result or result[0] != user_id:
         await message.answer("❌ Не найдено или не ваше.")
         return
-    conn = sqlite3.connect("/data/nomad_bot.db")
+    conn = sqlite3.connect("nomad_bot.db")
     cursor = conn.cursor()
     cursor.execute("DELETE FROM housing WHERE id = ?", (listing_id,))
     conn.commit()
@@ -200,7 +200,7 @@ async def save_booking(message: types.Message):
     user_id = message.from_user.id
     days = int(message.text)
     listing_id = booking_data[user_id]["listing_id"]
-    conn = sqlite3.connect("/data/nomad_bot.db")
+    conn = sqlite3.connect("nomad_bot.db")
     cursor = conn.cursor()
     cursor.execute("SELECT contact, location FROM housing WHERE id = ?", (listing_id,))
     result = cursor.fetchone()
@@ -209,7 +209,7 @@ async def save_booking(message: types.Message):
         await message.answer("❌ Объявление не найдено.")
         return
     host_contact, location = result
-    conn = sqlite3.connect("/data/nomad_bot.db")
+    conn = sqlite3.connect("nomad_bot.db")
     cursor = conn.cursor()
     cursor.execute(
         "INSERT INTO bookings (guest_id, guest_username, host_contact, location, days) VALUES (?, ?, ?, ?, ?)",
@@ -262,7 +262,7 @@ async def handle_all_messages(message: types.Message):
             )
         elif step == 4:
             if message.text.lower() in ["да", "д"]:
-                conn = sqlite3.connect("/data/nomad_bot.db")
+                conn = sqlite3.connect("nomad_bot.db")
                 cursor = conn.cursor()
                 cursor.execute(
                     "INSERT INTO housing (user_id, location, region, capacity, price, contact) VALUES (?, ?, ?, ?, ?, ?)",
@@ -277,7 +277,7 @@ async def handle_all_messages(message: types.Message):
                 del housing_data[user_id]
         return
 
-    with open("/data/feedback.txt", "a", encoding="utf-8") as f:
+    with open("feedback.txt", "a", encoding="utf-8") as f:
         f.write(message.text + "\n")
     await message.answer("🌾 Спасибо! Ваше мнение сохранено.")
 

@@ -375,7 +375,7 @@ async def delete_housing_start(message: types.Message):
 
     conn = sqlite3.connect("/data/nomad_bot.db")
     cursor = conn.cursor()
-    cursor.execute("SELECT id, location, price FROM housing WHERE contact = ?", (str(user_id),))
+    cursor.execute("SELECT id, location, price FROM housing WHERE user_id = ?", (user_id,))
     results = cursor.fetchall()
     conn.close()
 
@@ -398,7 +398,7 @@ async def delete_housing_confirm(message: types.Message):
 
     conn = sqlite3.connect("/data/nomad_bot.db")
     cursor = conn.cursor()
-    cursor.execute("SELECT contact FROM housing WHERE id = ?", (listing_id,))
+    cursor.execute("SELECT user_id FROM housing WHERE id = ?", (listing_id,))
     result = cursor.fetchone()
     conn.close()
 
@@ -406,7 +406,7 @@ async def delete_housing_confirm(message: types.Message):
         await message.answer("❌ Объявление с таким номером не найдено.")
         return
 
-    if result[0] != str(user_id):
+    if result[0] != user_id:
         await message.answer("⛔ Это объявление принадлежит другому пользователю.")
         return
 

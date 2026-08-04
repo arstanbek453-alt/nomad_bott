@@ -1,4 +1,3 @@
-> Arstanbek:
 import asyncio
 import csv
 import os

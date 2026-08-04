@@ -76,7 +76,10 @@ def main_menu():
     return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
 
 def region_buttons():
-    regions = ["🏙️ Бишкек", "🏙️ Ош", "🏞️ Иссык-Куль (Север)", "🏞️ Иссык-Куль (Юг)", "🌾 Чуй", "🌿 Талас", "🌄 Джалал-Абад", "🏜️ Баткен"]
+    regions = [
+        "Бишкек", "Ош", "Иссык-Куль (Север)", "Иссык-Куль (Юг)",
+        "Чуй", "Талас", "Джалал-Абад", "Баткен"
+    ]
     return ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text=r)] for r in regions], resize_keyboard=True)
 
 # ---- СТАРТ ----
@@ -101,7 +104,7 @@ async def start_search(message: types.Message):
     search_data[user_id] = {"step": "region"}
     await message.answer("📍 Выберите регион:", reply_markup=region_buttons())
 
-@dp.message(lambda message: message.text in ["🏙️ Бишкек", "🏙️ Ош", "🏞️ Иссык-Куль (Север)", "🏞️ Иссык-Куль (Юг)", "🌾 Чуй", "🌿 Талас", "🌄 Джалал-Абад", "🏜️ Баткен"] and message.from_user.id in search_data and message.from_user.id not in housing_data)
+@dp.message(lambda message: message.text in ["Бишкек", "Ош", "Иссык-Куль (Север)", "Иссык-Куль (Юг)", "Чуй", "Талас", "Джалал-Абад", "Баткен"] and message.from_user.id in search_data)
 async def search_region(message: types.Message):
     user_id = message.from_user.id
     search_data[user_id]["region"] = message.text
@@ -142,6 +145,59 @@ async def add_housing_start(message: types.Message):
     user_id = message.from_user.id
     housing_data[user_id] = {"step": 0}
     await message.answer("📍 Введите город или локацию:")
+
+# ---- ОБРАБОТЧИК ПОДАЧИ ЖИЛЬЯ (ОТДЕЛЬНЫЙ) ----
+@dp.message()
+async def housing_form(message: types.Message):
+    user_id = message.from_user.id
+    if user_id not in housing_data:
+        return
+
+    data = housing_data[user_id]
+    step = data.get("step", 0)
+
+    if step == 0:
+        data["location"] = message.text
+        data["step"] = "region"
+        await message.answer("📍 К какому региону относится? Выберите:", reply_markup=region_buttons())
+
+    elif step == "region":
+        data["region"] = message.text
+        data["step"] = 1
+        await message.answer("👥 Сколько человек?", reply_markup=ReplyKeyboardRemove())
+
+    elif step == 1:
+        data["capacity"] = message.text
+        data["step"] = 2
+        await message.answer("💰 Цена за ночь (в сомах):")
+
+    elif step == 2:
+        data["price"] = message.text
+        data["step"] = 3
+        await message.answer("📞 Ваш номер телефона:")
+
+    elif step == 3:
+        data["contact"] = message.text
+        data["step"] = 4
+        await message.answer(
+            f"📋 Проверьте:\n📍 {data['location']}\n🗺️ {data['region']}\n👥 {data['capacity']} чел.\n💰 {data['price']} сом\n📞 {data['contact']}\n\nВсё верно? Напишите «Да» или «Нет»"
+        )
+
+    elif step == 4:
+        if message.text.lower() in ["да", "д"]:
+            conn = sqlite3.connect("nomad_bot.db")
+            cursor = conn.cursor()
+            cursor.execute(
+                "INSERT INTO housing (user_id, location, region, capacity, price, contact) VALUES (?, ?, ?, ?, ?, ?)",
+                (user_id, data["location"], data["region"], data["capacity"], data["price"], data["contact"])
+            )
+            conn.commit()
+            conn.close()
+            await message.answer("✅ Объявление сохранено!")
+            del housing_data[user_id]
+        else:
+            await message.answer("❌ Отменено.")
+            del housing_data[user_id]
 
 # ---- УДАЛИТЬ ОБЪЯВЛЕНИЕ ----
 @dp.message(lambda message: message.text == "🗑️ Удалить объявление")
@@ -229,54 +285,12 @@ async def feedback_button(message: types.Message):
 async def help_button(message: types.Message):
     await help_command(message)
 
-# ---- ОБЩИЙ ОБРАБОТЧИК ----
+# ---- ОБЩИЙ ОБРАБОТЧИК (ТОЛЬКО ДЛЯ ОТЗЫВОВ) ----
 @dp.message()
-async def handle_all_messages(message: types.Message):
+async def save_feedback(message: types.Message):
     user_id = message.from_user.id
-
-    if user_id in housing_data:
-        data = housing_data[user_id]
-        step = data.get("step", 0)
-
-        if step == 0:
-            data["location"] = message.text
-            data["step"] = "region"
-            await message.answer("📍 К какому региону относится? Выберите:", reply_markup=region_buttons())
-        elif step == "region":
-            data["region"] = message.text
-            data["step"] = 1
-            await message.answer("👥 Сколько человек?", reply_markup=ReplyKeyboardRemove())
-        elif step == 1:
-            data["capacity"] = message.text
-            data["step"] = 2
-            await message.answer("💰 Цена за ночь (в сомах):")
-        elif step == 2:
-            data["price"] = message.text
-            data["step"] = 3
-            await message.answer("📞 Ваш номер телефона:")
-        elif step == 3:
-            data["contact"] = message.text
-            data["step"] = 4
-            await message.answer(
-                f"📋 Проверьте:\n📍 {data['location']}\n🗺️ {data['region']}\n👥 {data['capacity']} чел.\n💰 {data['price']} сом\n📞 {data['contact']}\n\nВсё верно? Напишите «Да» или «Нет»"
-            )
-        elif step == 4:
-            if message.text.lower() in ["да", "д"]:
-                conn = sqlite3.connect("nomad_bot.db")
-                cursor = conn.cursor()
-                cursor.execute(
-                    "INSERT INTO housing (user_id, location, region, capacity, price, contact) VALUES (?, ?, ?, ?, ?, ?)",
-                    (user_id, data["location"], data["region"], data["capacity"], data["price"], data["contact"])
-                )
-                conn.commit()
-                conn.close()
-                await message.answer("✅ Объявление сохранено!")
-                del housing_data[user_id]
-            else:
-                await message.answer("❌ Отменено.")
-                del housing_data[user_id]
+    if user_id in housing_data or user_id in search_data:
         return
-
     with open("feedback.txt", "a", encoding="utf-8") as f:
         f.write(message.text + "\n")
     await message.answer("🌾 Спасибо! Ваше мнение сохранено.")
@@ -288,6 +302,7 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
 
 
 

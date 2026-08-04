@@ -401,67 +401,7 @@ async def add_housing_start(message: types.Message):
     housing_data[user_id] = {}
     await message.answer("📍 Введите город или локацию (например: Чолпон-Ата)")
 
-@dp.message()
-async def housing_form(message: types.Message):
-    user_id = message.from_user.id
-    if user_id not in housing_data:
-        return
 
-    data = housing_data[user_id]
-    step = data.get("step", 0)
-
-    if step == 0:
-        data["location"] = message.text
-        data["step"] = "region"
-        await message.answer(
-            "📍 К какому региону относится это место? Выберите:",
-            reply_markup=region_buttons()
-        )
-    elif step == "region":
-        data["region"] = message.text
-        data["step"] = 1
-        await message.answer(
-        "👥 Сколько человек может разместиться?",
-        reply_markup=ReplyKeyboardRemove()
-    )
-    elif step == 1:
-        data["capacity"] = message.text
-        data["step"] = 2
-        await message.answer("💰 Цена за ночь (в сомах):")
-    elif step == 2:
-        data["price"] = message.text
-        data["step"] = 3
-        await message.answer("📞 Ваш номер телефона:")
-    elif step == 3:
-        data["contact"] = message.text
-        data["step"] = 4
-        await message.answer(
-            f"📋 Проверьте данные:\n\n"
-            f"📍 Локация: {data['location']}\n"
-            f"🗺️ Регион: {data['region']}\n"
-            f"👥 Вместимость: {data['capacity']} чел.\n"
-            f"💰 Цена: {data['price']} сом\n"
-            f"📞 Контакт: {data['contact']}\n\n"
-            f"Всё верно? Напишите «Да» или «Нет»"
-        )
-    elif step == 4:
-        if message.text.lower() in ["да", "д", "yes", "y"]:
-            conn = sqlite3.connect("/data/nomad_bot.db")
-            cursor = conn.cursor()
-            cursor.execute(
-                "INSERT INTO housing (location, region, capacity, price, contact) VALUES (?, ?, ?, ?, ?)",
-                (data["location"], data["region"], data["capacity"], data["price"], data["contact"])
-            )
-            conn.commit()
-            conn.close()
-            await message.answer("✅ Объявление сохранено!")
-            del housing_data[user_id]
-        else:
-            await message.answer("❌ Отменено. Начните заново через кнопку «🏠 Сдать жильё»")
-            del housing_data[user_id]
-    else:
-        await message.answer("⚠️ Что-то пошло не так. Начните заново через кнопку «🏠 Сдать жильё»")
-        del housing_data[user_id]
 
 @dp.message(lambda message: message.text and not message.text.startswith("/"))
 async def save_feedback(message: types.Message):

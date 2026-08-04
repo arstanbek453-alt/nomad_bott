@@ -100,7 +100,8 @@ def main_menu():
         [KeyboardButton(text="📅 Забронировать")],
         [KeyboardButton(text="💬 Оставить мнение")],
         [KeyboardButton(text="📤 Поделиться")],
-        [KeyboardButton(text="❓ Помощь")]
+        [KeyboardButton(text="❓ Помощь")],
+        [KeyboardButton(text="🗑️ Удалить объявление")]
     ]
     return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
 
@@ -349,6 +350,58 @@ async def share_bot(message: types.Message):
 @dp.message(lambda message: message.text == "❓ Помощь")
 async def help_button(message: types.Message):
     await help_command(message)
+
+delete_data = {}
+
+@dp.message(lambda message: message.text == "🗑️ Удалить объявление")
+async def delete_housing_start(message: types.Message):
+    user_id = message.from_user.id
+
+    conn = sqlite3.connect("/data/nomad_bot.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, location, price FROM housing WHERE contact = ?", (str(user_id),))
+    results = cursor.fetchall()
+    conn.close()
+
+    if not results:
+        await message.answer("📭 У вас нет активных объявлений.")
+        return
+
+    text = "🗑️ *Ваши объявления:*\n\n"
+    for row in results:
+        text += f"🔹 {row[0]}. 📍 {row[1]} — {row[2]} сом/ночь\n"
+    text += "\nНапишите номер объявления, которое хотите удалить."
+
+    delete_data[user_id] = {"step": "waiting"}
+    await message.answer(text, parse_mode="Markdown")
+
+@dp.message(lambda message: message.text.isdigit() and message.from_user.id in delete_data)
+async def delete_housing_confirm(message: types.Message):
+    user_id = message.from_user.id
+    listing_id = int(message.text)
+
+    conn = sqlite3.connect("/data/nomad_bot.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT contact FROM housing WHERE id = ?", (listing_id,))
+    result = cursor.fetchone()
+    conn.close()
+
+    if not result:
+        await message.answer("❌ Объявление с таким номером не найдено.")
+        return
+
+    if result[0] != str(user_id):
+        await message.answer("⛔ Это объявление принадлежит другому пользователю.")
+        return
+
+    conn = sqlite3.connect("/data/nomad_bot.db")
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM housing WHERE id = ?", (listing_id,))
+    conn.commit()
+    conn.close()
+
+    await message.answer("✅ Объявление удалено.")
+    del delete_data[user_id]
 
 @dp.message()
 async def handle_all_messages(message: types.Message):

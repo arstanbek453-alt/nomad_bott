@@ -315,15 +315,20 @@ async def save_booking(message: types.Message):
     user_id = message.from_user.id
     days = int(message.text)
     listing_id = booking_data[user_id]["listing_id"]
+
     conn = sqlite3.connect("/data/nomad_bot.db")
     cursor = conn.cursor()
     cursor.execute("SELECT contact, location FROM housing WHERE id = ?", (listing_id,))
     result = cursor.fetchone()
     conn.close()
+
     if not result:
         await message.answer("❌ Объявление не найдено.")
         return
+
     host_contact, location = result
+
+    # Сохраняем бронь в базу
     conn = sqlite3.connect("/data/nomad_bot.db")
     cursor = conn.cursor()
     cursor.execute(
@@ -332,11 +337,21 @@ async def save_booking(message: types.Message):
     )
     conn.commit()
     conn.close()
-    await bot.send_message(
-        ADMIN_ID,
-        f"🆕 Новая заявка!\n📍 {location}\n👤 @{message.from_user.username}\n📅 {days} дней\n📞 {message.from_user.id}"
-    )
-    await message.answer("✅ Заявка отправлена!")
+
+    # Отправляем уведомление хозяину (если его ID сохранён)
+    try:
+        await bot.send_message(
+            int(host_contact),  # предполагаем, что host_contact — это Telegram ID
+            f"🆕 *Новая заявка на бронирование!*\n\n"
+            f"📍 Локация: {location}\n"
+            f"👤 Гость: @{message.from_user.username}\n"
+            f"📅 Дней: {days}\n"
+            f"📞 Контакт гостя: {message.from_user.id}"
+        )
+    except Exception as e:
+        print(f"⚠️ Не удалось отправить уведомление хозяину: {e}")
+
+    await message.answer("✅ Заявка отправлена! Хозяин получит уведомление.")
     del booking_data[user_id]
 
 @dp.message(lambda message: message.text == "💬 Оставить мнение")

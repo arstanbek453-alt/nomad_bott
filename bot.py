@@ -15,6 +15,7 @@ dp = Dispatcher()
 user_language = {}
 housing_data = {}
 booking_data = {}
+delete_data = {}
 
 def init_db():
     conn = sqlite3.connect("/data/nomad_bot.db")
@@ -59,6 +60,7 @@ def init_db():
             PRIMARY KEY (user_id, candidate_id)
         )
     """)
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS housing (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -71,6 +73,7 @@ def init_db():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
+     
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS bookings (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -367,8 +370,6 @@ async def share_bot(message: types.Message):
 async def help_button(message: types.Message):
     await help_command(message)
 
-delete_data = {}
-
 @dp.message(lambda message: message.text == "🗑️ Удалить объявление")
 async def delete_housing_start(message: types.Message):
     user_id = message.from_user.id
@@ -456,7 +457,7 @@ async def handle_all_messages(message: types.Message):
                 cursor.execute(
                     "INSERT INTO housing (user_id, location, region, capacity, price, contact) VALUES (?, ?, ?, ?, ?, ?)",
                     (user_id, data["location"], data["region"], data["capacity"], data["price"], data["contact"])
-                )
+                )    
                 conn.commit()
                 conn.close()
                 await message.answer("✅ Объявление сохранено!")
@@ -477,4 +478,5 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
 

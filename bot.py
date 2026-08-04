@@ -6,6 +6,9 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove, InlineKeyboardButton, InlineKeyboardMarkup
 
+print("🚀 Бот запускается...")
+print(f"🔑 Токен: {TOKEN[:10]}...")
+
 TOKEN = "8833304083:AAE92ZCznJUnAkic46jZNzTBoDkUiqgMWFo"
 ADMIN_ID = 8144871993  # Замени на свой Telegram ID
 
@@ -211,7 +214,7 @@ async def start_search(message: types.Message):
 @dp.message(lambda message: message.text in [
     "🏙️ Бишкек", "🏙️ Ош", "🏞️ Иссык-Куль (Север)", "🏞️ Иссык-Куль (Юг)",
 
-"🌾 Чуй", "🌿 Талас", "🌄 Джалал-Абад", "🏜️ Баткен"
+    "🌾 Чуй", "🌿 Талас", "🌄 Джалал-Абад", "🏜️ Баткен"
 ] and message.from_user.id in search_data)
 async def search_region(message: types.Message):
     user_id = message.from_user.id

@@ -10,23 +10,12 @@ ADMIN_ID = 8144871993  # Замени на свой Telegram ID
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
-# ---- ХРАНИЛИЩА ----
-housing_data = {}
-search_data = {}
-delete_data = {}
-booking_data = {}
+# ---- ХРАНИЛИЩА СОСТОЯНИЙ ----
+user_state = {}  # {user_id: {"mode": "search"|"add"|"delete"|"book", "step": 0, "data": {}}}
 
-# ---- БАЗА ДАННЫХ ----
 def init_db():
     conn = sqlite3.connect("nomad_bot.db")
     cursor = conn.cursor()
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            user_id INTEGER PRIMARY KEY,
-            username TEXT,
-            registered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    """)
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS housing (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -63,7 +52,6 @@ def init_db():
     conn.close()
     print("✅ База данных инициализирована")
 
-# ---- МЕНЮ ----
 def main_menu():
     buttons = [
         [KeyboardButton(text="🏠 Найти жильё")],
@@ -76,10 +64,7 @@ def main_menu():
     return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
 
 def region_buttons():
-    regions = [
-        "Бишкек", "Ош", "Иссык-Куль (Север)", "Иссык-Куль (Юг)",
-        "Чуй", "Талас", "Джалал-Абад", "Баткен"
-    ]
+    regions = ["Бишкек", "Ош", "Иссык-Куль (Север)", "Иссык-Куль (Юг)", "Чуй", "Талас", "Джалал-Абад", "Баткен"]
     return ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text=r)] for r in regions], resize_keyboard=True)
 
 # ---- СТАРТ ----
@@ -93,111 +78,104 @@ async def start_command(message: types.Message):
     conn.close()
     await message.answer(f"🏔️ Салам, {message.from_user.first_name}! Я — NomadConnect.", reply_markup=main_menu())
 
-@dp.message(Command("help"))
-async def help_command(message: types.Message):
-    await message.answer("Доступные команды:\n/start – Приветствие\n/help – Помощь")
-
 # ---- НАЙТИ ЖИЛЬЁ ----
 @dp.message(lambda message: message.text == "🏠 Найти жильё")
 async def start_search(message: types.Message):
     user_id = message.from_user.id
-    search_data[user_id] = {"step": "region"}
+    user_state[user_id] = {"mode": "search", "step": 0}
     await message.answer("📍 Выберите регион:", reply_markup=region_buttons())
 
-@dp.message(lambda message: message.text in ["Бишкек", "Ош", "Иссык-Куль (Север)", "Иссык-Куль (Юг)", "Чуй", "Талас", "Джалал-Абад", "Баткен"] and message.from_user.id in search_data)
+@dp.message(lambda message: message.text in ["Бишкек", "Ош", "Иссык-Куль (Север)", "Иссык-Куль (Юг)", "Чуй", "Талас", "Джалал-Абад", "Баткен"] and user_state.get(message.from_user.id, {}).get("mode") == "search" and user_state[message.from_user.id]["step"] == 0)
 async def search_region(message: types.Message):
     user_id = message.from_user.id
-    search_data[user_id]["region"] = message.text
-    search_data[user_id]["step"] = "capacity"
+    user_state[user_id]["data"] = {"region": message.text}
+    user_state[user_id]["step"] = 1
     await message.answer("👥 Сколько человек?", reply_markup=ReplyKeyboardRemove())
 
-@dp.message(lambda message: message.text.isdigit() and message.from_user.id in search_data and search_data[message.from_user.id].get("step") == "capacity")
+@dp.message(lambda message: message.text.isdigit() and user_state.get(message.from_user.id, {}).get("mode") == "search" and user_state[message.from_user.id]["step"] == 1)
 async def search_capacity(message: types.Message):
     user_id = message.from_user.id
-    search_data[user_id]["capacity"] = int(message.text)
-    search_data[user_id]["step"] = "price"
+    user_state[user_id]["data"]["capacity"] = int(message.text)
+    user_state[user_id]["step"] = 2
     await message.answer("💰 Максимальная цена за ночь (в сомах):")
 
-@dp.message(lambda message: message.text.isdigit() and message.from_user.id in search_data and search_data[message.from_user.id].get("step") == "price")
+@dp.message(lambda message: message.text.isdigit() and user_state.get(message.from_user.id, {}).get("mode") == "search" and user_state[message.from_user.id]["step"] == 2)
 async def search_price(message: types.Message):
     user_id = message.from_user.id
-    search_data[user_id]["price"] = int(message.text)
-    region = search_data[user_id]["region"]
-    capacity = search_data[user_id]["capacity"]
-    price = search_data[user_id]["price"]
+    data = user_state[user_id]["data"]
+    data["price"] = int(message.text)
+
     conn = sqlite3.connect("nomad_bot.db")
     cursor = conn.cursor()
-    cursor.execute("SELECT location, capacity, price, contact FROM housing WHERE region = ? AND capacity >= ? AND price <= ?", (region, capacity, price))
+    cursor.execute("""
+        SELECT location, capacity, price, contact FROM housing
+        WHERE region = ? AND capacity >= ? AND price <= ?
+    """, (data["region"], data["capacity"], data["price"]))
     results = cursor.fetchall()
     conn.close()
+
     if not results:
-        await message.answer("🏠 Ничего не найдено.")
+        await message.answer("🏠 По вашему запросу ничего не найдено.")
     else:
         text = "🏠 *Найденные варианты:*\n\n"
         for i, row in enumerate(results, 1):
             text += f"{i}. 📍 {row[0]}\n👥 {row[1]} чел.\n💰 {row[2]} сом/ночь\n📞 {row[3]}\n\n"
         await message.answer(text, parse_mode="Markdown")
-    del search_data[user_id]
+
+    del user_state[user_id]
 
 # ---- СДАТЬ ЖИЛЬЁ ----
 @dp.message(lambda message: message.text == "🏠 Сдать жильё")
 async def add_housing_start(message: types.Message):
     user_id = message.from_user.id
-    housing_data[user_id] = {"step": 0}
+    user_state[user_id] = {"mode": "add", "step": 0, "data": {}}
     await message.answer("📍 Введите город или локацию:")
 
-# ---- ОБРАБОТЧИК ПОДАЧИ ЖИЛЬЯ (ОТДЕЛЬНЫЙ) ----
-@dp.message()
-async def housing_form(message: types.Message):
+@dp.message(lambda message: user_state.get(message.from_user.id, {}).get("mode") == "add" and user_state[message.from_user.id]["step"] == 0)
+async def add_housing_location(message: types.Message):
     user_id = message.from_user.id
-    if user_id not in housing_data:
-        return
+    user_state[user_id]["data"]["location"] = message.text
+    user_state[user_id]["step"] = 1
+    await message.answer("📍 К какому региону относится? Выберите:", reply_markup=region_buttons())
 
-    data = housing_data[user_id]
-    step = data.get("step", 0)
+@dp.message(lambda message: message.text in ["Бишкек", "Ош", "Иссык-Куль (Север)", "Иссык-Куль (Юг)", "Чуй", "Талас", "Джалал-Абад", "Баткен"] and user_state.get(message.from_user.id, {}).get("mode") == "add" and user_state[message.from_user.id]["step"] == 1)
+async def add_housing_region(message: types.Message):
+    user_id = message.from_user.id
+    user_state[user_id]["data"]["region"] = message.text
+    user_state[user_id]["step"] = 2
+    await message.answer("👥 Сколько человек?", reply_markup=ReplyKeyboardRemove())
 
-    if step == 0:
-        data["location"] = message.text
-        data["step"] = "region"
-        await message.answer("📍 К какому региону относится? Выберите:", reply_markup=region_buttons())
+@dp.message(lambda message: message.text.isdigit() and user_state.get(message.from_user.id, {}).get("mode") == "add" and user_state[message.from_user.id]["step"] == 2)
+async def add_housing_capacity(message: types.Message):
+    user_id = message.from_user.id
+    user_state[user_id]["data"]["capacity"] = int(message.text)
+    user_state[user_id]["step"] = 3
+    await message.answer("💰 Цена за ночь (в сомах):")
 
-    elif step == "region":
-        data["region"] = message.text
-        data["step"] = 1
-        await message.answer("👥 Сколько человек?", reply_markup=ReplyKeyboardRemove())
+@dp.message(lambda message: message.text.isdigit() and user_state.get(message.from_user.id, {}).get("mode") == "add" and user_state[message.from_user.id]["step"] == 3)
+async def add_housing_price(message: types.Message):
+    user_id = message.from_user.id
+    user_state[user_id]["data"]["price"] = int(message.text)
+    user_state[user_id]["step"] = 4
+    await message.answer("📞 Ваш номер телефона:")
 
-    elif step == 1:
-        data["capacity"] = message.text
-        data["step"] = 2
-        await message.answer("💰 Цена за ночь (в сомах):")
+@dp.message(lambda message: user_state.get(message.from_user.id, {}).get("mode") == "add" and user_state[message.from_user.id]["step"] == 4)
+async def add_housing_contact(message: types.Message):
+    user_id = message.from_user.id
+    data = user_state[user_id]["data"]
+    data["contact"] = message.text
 
-    elif step == 2:
-        data["price"] = message.text
-        data["step"] = 3
-        await message.answer("📞 Ваш номер телефона:")
+    conn = sqlite3.connect("nomad_bot.db")
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO housing (user_id, location, region, capacity, price, contact) VALUES (?, ?, ?, ?, ?, ?)",
+        (user_id, data["location"], data["region"], data["capacity"], data["price"], data["contact"])
+    )
+    conn.commit()
+    conn.close()
 
-    elif step == 3:
-        data["contact"] = message.text
-        data["step"] = 4
-        await message.answer(
-            f"📋 Проверьте:\n📍 {data['location']}\n🗺️ {data['region']}\n👥 {data['capacity']} чел.\n💰 {data['price']} сом\n📞 {data['contact']}\n\nВсё верно? Напишите «Да» или «Нет»"
-        )
-
-    elif step == 4:
-        if message.text.lower() in ["да", "д"]:
-            conn = sqlite3.connect("nomad_bot.db")
-            cursor = conn.cursor()
-            cursor.execute(
-                "INSERT INTO housing (user_id, location, region, capacity, price, contact) VALUES (?, ?, ?, ?, ?, ?)",
-                (user_id, data["location"], data["region"], data["capacity"], data["price"], data["contact"])
-            )
-            conn.commit()
-            conn.close()
-            await message.answer("✅ Объявление сохранено!")
-            del housing_data[user_id]
-        else:
-            await message.answer("❌ Отменено.")
-            del housing_data[user_id]
+    await message.answer("✅ Объявление сохранено!")
+    del user_state[user_id]
 
 # ---- УДАЛИТЬ ОБЪЯВЛЕНИЕ ----
 @dp.message(lambda message: message.text == "🗑️ Удалить объявление")
@@ -208,63 +186,76 @@ async def delete_housing_start(message: types.Message):
     cursor.execute("SELECT id, location, price FROM housing WHERE user_id = ?", (user_id,))
     results = cursor.fetchall()
     conn.close()
+
     if not results:
-        await message.answer("📭 У вас нет объявлений.")
+        await message.answer("📭 У вас нет активных объявлений.")
         return
+
     text = "🗑️ *Ваши объявления:*\n\n"
     for row in results:
         text += f"🔹 {row[0]}. 📍 {row[1]} — {row[2]} сом/ночь\n"
-    text += "\nНапишите номер для удаления."
-    delete_data[user_id] = {"step": "waiting"}
+    text += "\nНапишите номер объявления, которое хотите удалить."
+
+    user_state[user_id] = {"mode": "delete", "step": 0}
     await message.answer(text, parse_mode="Markdown")
 
-@dp.message(lambda message: message.text.isdigit() and message.from_user.id in delete_data)
+@dp.message(lambda message: message.text.isdigit() and user_state.get(message.from_user.id, {}).get("mode") == "delete")
 async def delete_housing_confirm(message: types.Message):
     user_id = message.from_user.id
     listing_id = int(message.text)
+
     conn = sqlite3.connect("nomad_bot.db")
     cursor = conn.cursor()
     cursor.execute("SELECT user_id FROM housing WHERE id = ?", (listing_id,))
     result = cursor.fetchone()
     conn.close()
+
     if not result or result[0] != user_id:
-        await message.answer("❌ Не найдено или не ваше.")
+        await message.answer("❌ Объявление не найдено или не принадлежит вам.")
         return
+
     conn = sqlite3.connect("nomad_bot.db")
     cursor = conn.cursor()
     cursor.execute("DELETE FROM housing WHERE id = ?", (listing_id,))
     conn.commit()
     conn.close()
+
     await message.answer("✅ Объявление удалено.")
-    del delete_data[user_id]
+    del user_state[user_id]
 
 # ---- БРОНИРОВАНИЕ ----
 @dp.message(lambda message: message.text == "📅 Забронировать")
 async def start_booking(message: types.Message):
     user_id = message.from_user.id
-    booking_data[user_id] = {}
-    await message.answer("🏠 Введите номер объявления:")
+    user_state[user_id] = {"mode": "book", "step": 0}
+    await message.answer("🏠 Введите номер объявления, которое хотите забронировать:")
 
-@dp.message(lambda message: message.text.isdigit() and message.from_user.id in booking_data and "listing_id" not in booking_data[message.from_user.id])
-async def get_booking_details(message: types.Message):
+@dp.message(lambda message: message.text.isdigit() and user_state.get(message.from_user.id, {}).get("mode") == "book" and user_state[message.from_user.id]["step"] == 0)
+async def book_get_listing(message: types.Message):
     user_id = message.from_user.id
-    booking_data[user_id]["listing_id"] = int(message.text)
+    user_state[user_id]["listing_id"] = int(message.text)
+    user_state[user_id]["step"] = 1
     await message.answer("📅 На сколько дней?")
 
-@dp.message(lambda message: message.text.isdigit() and message.from_user.id in booking_data and "days" not in booking_data[message.from_user.id])
+@dp.message(lambda message: message.text.isdigit() and user_state.get(message.from_user.id, {}).get("mode") == "book" and user_state[message.from_user.id]["step"] == 1)
 async def save_booking(message: types.Message):
     user_id = message.from_user.id
     days = int(message.text)
-    listing_id = booking_data[user_id]["listing_id"]
+    listing_id = user_state[user_id]["listing_id"]
+
     conn = sqlite3.connect("nomad_bot.db")
     cursor = conn.cursor()
     cursor.execute("SELECT contact, location FROM housing WHERE id = ?", (listing_id,))
     result = cursor.fetchone()
     conn.close()
+
     if not result:
         await message.answer("❌ Объявление не найдено.")
+        del user_state[user_id]
         return
+
     host_contact, location = result
+
     conn = sqlite3.connect("nomad_bot.db")
     cursor = conn.cursor()
     cursor.execute(
@@ -273,23 +264,25 @@ async def save_booking(message: types.Message):
     )
     conn.commit()
     conn.close()
+
     await message.answer("✅ Заявка отправлена!")
-    del booking_data[user_id]
+    del user_state[user_id]
 
 # ---- ОТЗЫВЫ ----
 @dp.message(lambda message: message.text == "💬 Оставить мнение")
 async def feedback_button(message: types.Message):
     await message.answer("📝 Напишите своё мнение — я сохраню его.")
 
+# ---- ПОМОЩЬ ----
 @dp.message(lambda message: message.text == "❓ Помощь")
 async def help_button(message: types.Message):
-    await help_command(message)
+    await message.answer("Доступные команды:\n/start – Приветствие\n/help – Помощь")
 
 # ---- ОБЩИЙ ОБРАБОТЧИК (ТОЛЬКО ДЛЯ ОТЗЫВОВ) ----
 @dp.message()
 async def save_feedback(message: types.Message):
     user_id = message.from_user.id
-    if user_id in housing_data or user_id in search_data:
+    if user_id in user_state:
         return
     with open("feedback.txt", "a", encoding="utf-8") as f:
         f.write(message.text + "\n")

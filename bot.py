@@ -6,7 +6,7 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove, InlineKeyboardButton, InlineKeyboardMarkup
 
-TOKEN = "8833304083:AAE92ZCznJUnAkic46jZNzTBoDkUiqgMWFo"
+TOKEN = os.environ.get('BOT_TOKEN')
 ADMIN_ID = 8144871993  # Замени на свой ID
 
 bot = Bot(token=TOKEN)

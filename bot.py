@@ -101,7 +101,7 @@ async def start_search(message: types.Message):
     search_data[user_id] = {"step": "region"}
     await message.answer("📍 Выберите регион:", reply_markup=region_buttons())
 
-@dp.message(lambda message: message.text in ["🏙️ Бишкек", "🏙️ Ош", "🏞️ Иссык-Куль (Север)", "🏞️ Иссык-Куль (Юг)", "🌾 Чуй", "🌿 Талас", "🌄 Джалал-Абад", "🏜️ Баткен"] and message.from_user.id in search_data)
+@dp.message(lambda message: message.text in ["🏙️ Бишкек", "🏙️ Ош", "🏞️ Иссык-Куль (Север)", "🏞️ Иссык-Куль (Юг)", "🌾 Чуй", "🌿 Талас", "🌄 Джалал-Абад", "🏜️ Баткен"] and message.from_user.id in search_data and message.from_user.id not in housing_data)
 async def search_region(message: types.Message):
     user_id = message.from_user.id
     search_data[user_id]["region"] = message.text

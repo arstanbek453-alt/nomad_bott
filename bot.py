@@ -11,6 +11,19 @@ TOKEN = "8833304083:AAE92ZCznJuNakic46jZNzTBoDkUigqMWFo"
 ADMIN_ID = 8144871993
 housing_data = {} 
 
+def region_buttons():
+    buttons = [
+        [KeyboardButton(text="🏙️ Бишкек")],
+        [KeyboardButton(text="🏙️ Ош")],
+        [KeyboardButton(text="🏞️ Иссык-Куль (Север)")],
+        [KeyboardButton(text="🏞️ Иссык-Куль (Юг)")],
+        [KeyboardButton(text="🌾 Чуй")],
+        [KeyboardButton(text="🌿 Талас")],
+        [KeyboardButton(text="🌄 Джалал-Абад")],
+        [KeyboardButton(text="🏜️ Баткен")]
+    ]
+    return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
+
 def init_db():
     conn = sqlite3.connect("/data/nomad_bot.db")
     cursor = conn.cursor()

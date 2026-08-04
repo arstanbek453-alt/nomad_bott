@@ -420,7 +420,10 @@ async def housing_form(message: types.Message):
     elif step == "region":
         data["region"] = message.text
         data["step"] = 1
-        await message.answer("👥 Сколько человек может разместиться?")
+        await message.answer(
+        "👥 Сколько человек может разместиться?",
+        reply_markup=ReplyKeyboardRemove()
+    )
     elif step == 1:
         data["capacity"] = message.text
         data["step"] = 2

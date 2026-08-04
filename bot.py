@@ -117,7 +117,6 @@ def region_buttons():
     ]
     return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
 
-> Arstanbek:
 @dp.message(Command("start"))
 async def start_command(message: types.Message):
     user_id = message.from_user.id
@@ -201,7 +200,6 @@ async def results_command(message: types.Message):
     cursor.execute("""
         SELECT c.name, COUNT(v.candidate_id) as votes
 
-> Arstanbek:
 FROM candidates c
         LEFT JOIN votes v ON c.id = v.candidate_id
         GROUP BY c.id
@@ -301,7 +299,6 @@ async def save_booking(message: types.Message):
     await message.answer("✅ Заявка отправлена!")
     del booking_data[user_id]
 
-> Arstanbek:
 @dp.message(lambda message: message.text == "💬 Оставить мнение")
 async def feedback_button(message: types.Message):
     await message.answer("📝 Напишите своё мнение — я сохраню его.")
@@ -370,6 +367,6 @@ async def main():
     print("👤 Администратор:", ADMIN_ID)
     await dp.start_polling(bot)
 
-if name == "main":
+if __name__ == "__main__":
     asyncio.run(main())
 

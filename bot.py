@@ -66,6 +66,7 @@ def init_db():
         CREATE TABLE IF NOT EXISTS housing (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             location TEXT,
+            region TEXT,
             capacity INTEGER,
             price INTEGER,
             contact TEXT,
@@ -394,10 +395,17 @@ async def housing_form(message: types.Message):
         return
 
     data = housing_data[user_id]
-    step = data.get("step", 0)  # получаем текущий шаг, по умолчанию 0
+    step = data.get("step", 0)
 
     if step == 0:
         data["location"] = message.text
+        data["step"] = "region"
+        await message.answer(
+            "📍 К какому региону относится это место? Выберите:",
+            reply_markup=region_buttons()
+        )
+    elif step == "region":
+        data["region"] = message.text
         data["step"] = 1
         await message.answer("👥 Сколько человек может разместиться?")
     elif step == 1:
@@ -414,6 +422,7 @@ async def housing_form(message: types.Message):
         await message.answer(
             f"📋 Проверьте данные:\n\n"
             f"📍 Локация: {data['location']}\n"
+            f"🗺️ Регион: {data['region']}\n"
             f"👥 Вместимость: {data['capacity']} чел.\n"
             f"💰 Цена: {data['price']} сом\n"
             f"📞 Контакт: {data['contact']}\n\n"
@@ -424,16 +433,19 @@ async def housing_form(message: types.Message):
             conn = sqlite3.connect("/data/nomad_bot.db")
             cursor = conn.cursor()
             cursor.execute(
-                "INSERT INTO housing (location, capacity, price, contact) VALUES (?, ?, ?, ?)",
-                (data["location"], data["capacity"], data["price"], data["contact"])
+                "INSERT INTO housing (location, region, capacity, price, contact) VALUES (?, ?, ?, ?, ?)",
+                (data["location"], data["region"], data["capacity"], data["price"], data["contact"])
             )
             conn.commit()
             conn.close()
             await message.answer("✅ Объявление сохранено!")
             del housing_data[user_id]
         else:
-            await message.answer("Начните заново через кнопку «🏠 Сдать жильё»")
+            await message.answer("❌ Отменено. Начните заново через кнопку «🏠 Сдать жильё»")
             del housing_data[user_id]
+    else:
+        await message.answer("⚠️ Что-то пошло не так. Начните заново через кнопку «🏠 Сдать жильё»")
+        del housing_data[user_id]
 
 @dp.message(lambda message: message.text and not message.text.startswith("/"))
 async def save_feedback(message: types.Message):

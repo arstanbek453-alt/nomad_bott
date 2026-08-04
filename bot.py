@@ -142,7 +142,7 @@ async def add_housing_location(message: types.Message):
 async def add_housing_region(message: types.Message):
     user_id = message.from_user.id
     user_state[user_id]["data"]["region"] = message.text
-    user_state[user_id]["step"] = 2
+    user_state[user_id]["step"] = 2  # ← переключаем на следующий шаг
     await message.answer("👥 Сколько человек?", reply_markup=ReplyKeyboardRemove())
 
 @dp.message(lambda message: message.text.isdigit() and user_state.get(message.from_user.id, {}).get("mode") == "add" and user_state[message.from_user.id]["step"] == 2)

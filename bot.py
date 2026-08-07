@@ -277,6 +277,7 @@ async def help_command(message: types.Message):
 async def agent_handler(message: types.Message):
     user_id = message.from_user.id
     user_text = message.text
+
     print(f"📩 Сообщение от {user_id}: {user_text}")
     print(f"📊 user_state: {user_state}")
 
@@ -320,24 +321,17 @@ async def agent_handler(message: types.Message):
         await delete_confirm(message)
         return
 
-    # ---- ЕСЛИ НИ ОДИН ИЗ РЕЖИМОВ — ИСПОЛЬЗУЕМ AI АГЕНТА ----
+    # ---- ЕСЛИ НЕТ АКТИВНОГО РЕЖИМА — ИСПОЛЬЗУЕМ AI ----
     response = openai.ChatCompletion.create(
         model="gpt-4",
         messages=[
             {"role": "system", "content": """
-            You are NomadConnect assistant. Your job is to understand user requests and classify them.
-
-            Always respond in Russian.
-
-            Classify user intent into one of these actions:
+            You are NomadConnect assistant. Classify user intent:
             - 'search' → user wants to find accommodation
             - 'booking' → user wants to book
             - 'add' → user wants to list property
             - 'delete' → user wants to delete listing
-            - 'general' → casual chat or question
-
-            If you're unsure, ask a clarifying question.
-            If the user asks something unrelated, respond politely that you're only able to help with accommodation booking.
+            - 'general' → casual chat
             """},
             {"role": "user", "content": user_text}
         ]

@@ -26,6 +26,8 @@ user_state = {}
 def init_db():
     conn = sqlite3.connect("nomad_bot.db")
     c = conn.cursor()
+
+    # Таблица для объявлений о жилье
     c.execute("""
         CREATE TABLE IF NOT EXISTS housing (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -37,6 +39,8 @@ def init_db():
             contact TEXT
         )
     """)
+
+    # Таблица для бронирований
     c.execute("""
         CREATE TABLE IF NOT EXISTS bookings (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -47,8 +51,20 @@ def init_db():
             days INTEGER
         )
     """)
+
+    # Таблица для отзывов
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS feedback (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            text TEXT
+        )
+    """)
+
     conn.commit()
     conn.close()
+    print("✅ База данных инициализирована")
+
 
 # =========================================
 # 5. МЕНЮ И КНОПКИ

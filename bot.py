@@ -277,6 +277,8 @@ async def help_command(message: types.Message):
 async def agent_handler(message: types.Message):
     user_id = message.from_user.id
     user_text = message.text
+    print(f"📩 Сообщение от {user_id}: {user_text}")
+    print(f"📊 user_state: {user_state}")
 
     # ---- ЕСЛИ ПОЛЬЗОВАТЕЛЬ В РЕЖИМЕ ПОИСКА ----
     if user_id in user_state and user_state[user_id].get("mode") == "search":

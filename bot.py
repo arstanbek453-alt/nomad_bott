@@ -242,21 +242,43 @@ async def booking_save(message: types.Message):
     user_id = message.from_user.id
     days = int(message.text)
     listing_id = user_state[user_id]["listing_id"]
+
     conn = sqlite3.connect("nomad_bot.db")
     c = conn.cursor()
     c.execute("SELECT contact, location FROM housing WHERE id = ?", (listing_id,))
     row = c.fetchone()
     conn.close()
+
     if row:
         host_contact, location = row
+
+        # Сохраняем заявку в базу
         conn = sqlite3.connect("nomad_bot.db")
         c = conn.cursor()
-        c.execute("INSERT INTO bookings (guest_id, guest_username, host_contact, location, days) VALUES (?, ?, ?, ?, ?)", (user_id, message.from_user.username or "unknown", host_contact, location, days))
+        c.execute("""
+            INSERT INTO bookings (guest_id, guest_username, host_contact, location, days)
+            VALUES (?, ?, ?, ?, ?)
+        """, (user_id, message.from_user.username or "unknown", host_contact, location, days))
         conn.commit()
         conn.close()
+
+        # Отправляем уведомление поставщику
+        try:
+            await bot.send_message(
+                int(host_contact),
+                f"🆕 Новая заявка на бронирование!\n"
+                f"📍 {location}\n"
+                f"👤 Гость: @{message.from_user.username}\n"
+                f"📅 {days} дней"
+            )
+        except:
+            print("⚠️ Не удалось отправить уведомление поставщику")
+
         await message.answer("✅ Заявка отправлена!")
+
     else:
         await message.answer("❌ Объявление не найдено.")
+
     del user_state[user_id]
 
 # =========================================

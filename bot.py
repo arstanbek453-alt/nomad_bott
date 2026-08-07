@@ -257,18 +257,67 @@ async def help_command(message: types.Message):
 # =========================================
 @dp.message()
 async def agent_handler(message: types.Message):
+    user_id = message.from_user.id
     user_text = message.text
 
+    # ---- ЕСЛИ ПОЛЬЗОВАТЕЛЬ В РЕЖИМЕ ПОИСКА ----
+    if user_id in user_state and user_state[user_id].get("mode") == "search":
+        step = user_state[user_id].get("step", 0)
+        if step == 0:
+            await search_region(message)
+        elif step == 1:
+            await search_capacity(message)
+        elif step == 2:
+            await search_price(message)
+        return
+
+    # ---- ЕСЛИ ПОЛЬЗОВАТЕЛЬ В РЕЖИМЕ ДОБАВЛЕНИЯ ----
+    if user_id in user_state and user_state[user_id].get("mode") == "add":
+        step = user_state[user_id].get("step", 0)
+        if step == 0:
+            await add_location(message)
+        elif step == 1:
+            await add_region(message)
+        elif step == 2:
+            await add_capacity(message)
+        elif step == 3:
+            await add_price(message)
+        elif step == 4:
+            await add_contact(message)
+        return
+
+    # ---- ЕСЛИ ПОЛЬЗОВАТЕЛЬ В РЕЖИМЕ БРОНИРОВАНИЯ ----
+    if user_id in user_state and user_state[user_id].get("mode") == "book":
+        step = user_state[user_id].get("step", 0)
+        if step == 0:
+            await booking_listing(message)
+        elif step == 1:
+            await booking_save(message)
+        return
+
+    # ---- ЕСЛИ ПОЛЬЗОВАТЕЛЬ В РЕЖИМЕ УДАЛЕНИЯ ----
+    if user_id in user_state and user_state[user_id].get("mode") == "delete":
+        await delete_confirm(message)
+        return
+
+    # ---- ЕСЛИ НИ ОДИН ИЗ РЕЖИМОВ — ИСПОЛЬЗУЕМ AI АГЕНТА ----
     response = openai.ChatCompletion.create(
         model="gpt-4",
         messages=[
             {"role": "system", "content": """
-            You are NomadConnect assistant. Classify user intent:
+            You are NomadConnect assistant. Your job is to understand user requests and classify them.
+
+            Always respond in Russian.
+
+            Classify user intent into one of these actions:
             - 'search' → user wants to find accommodation
             - 'booking' → user wants to book
             - 'add' → user wants to list property
             - 'delete' → user wants to delete listing
-            - 'general' → casual chat
+            - 'general' → casual chat or question
+
+            If you're unsure, ask a clarifying question.
+            If the user asks something unrelated, respond politely that you're only able to help with accommodation booking.
             """},
             {"role": "user", "content": user_text}
         ]

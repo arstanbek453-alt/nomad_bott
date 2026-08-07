@@ -27,9 +27,7 @@ async def agent_handler(message: types.Message):
     thinking = await message.answer("🤔 Думаю...")
 
     try:
-        client = openai.OpenAI(api_key=openai.api_key)
-
-        response = client.chat.completions.create(
+        response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": """

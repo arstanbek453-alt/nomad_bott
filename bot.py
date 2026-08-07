@@ -22,6 +22,10 @@ async def start_command(message: types.Message):
 
 @dp.message()
 async def agent_handler(message: types.Message):
+     try:
+        response = openai.ChatCompletion.create(...)
+    except Exception as e:
+        await message.answer(f"⚠️ Ошибка: {str(e)}")
     user_text = message.text
     user_lang = "ru"
 

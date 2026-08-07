@@ -176,6 +176,8 @@ async def add_price(message: types.Message):
 @dp.message(lambda message: user_state.get(message.from_user.id, {}).get("mode") == "add" and user_state[message.from_user.id]["step"] == 4)
 async def add_contact(message: types.Message):
     user_id = message.from_user.id
+    print(f"🔍 add_contact вызван для {user_id}")  # ← добавь эту строку
+    print(f"🔍 user_state: {user_state}")           # ← и эту
     data = user_state[user_id]["data"]
     data["contact"] = message.text
     conn = sqlite3.connect("nomad_bot.db")

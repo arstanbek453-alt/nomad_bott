@@ -22,18 +22,17 @@ async def start_command(message: types.Message):
 
 @dp.message()
 async def agent_handler(message: types.Message):
-    print(f"📩 Запрос к OpenAI: {user_text}")
     user_text = message.text
 
+    # Сообщение "Думаю..."
+    thinking = await message.answer("🤔 Думаю...")
+
     try:
-        # Create a client instance
         client = openai.OpenAI(api_key=openai.api_key)
 
-        # Use the new client.chat.completions.create() method
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
-                
                 {"role": "system", "content": """
                 You are NomadConnect — a friendly and helpful assistant.
                 You can answer questions about Kyrgyzstan, the Nomad Games, nomadic culture, and travel.
@@ -42,14 +41,15 @@ async def agent_handler(message: types.Message):
                 """},
                 {"role": "user", "content": user_text}
             ],
-            timeout=10
+            timeout=10  # ← ждёт 10 секунд, потом ошибка
         )
 
-        # Access the reply correctly
         reply = response.choices[0].message.content
+        await thinking.delete()
         await message.answer(reply)
 
     except Exception as e:
+        await thinking.delete()
         await message.answer(f"⚠️ Ошибка: {str(e)}")
         
 async def main():

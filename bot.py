@@ -24,14 +24,10 @@ async def start_command(message: types.Message):
 async def agent_handler(message: types.Message):
     user_text = message.text
 
-    # Сообщение "Думаю..."
     thinking = await message.answer("🤔 Думаю...")
 
     try:
-        client = openai.OpenAI(
-            api_key=openai.api_key,
-            http_client=openai.DefaultHttpxClient()  # ← без прокси
-        )
+        client = openai.OpenAI(api_key=openai.api_key)
 
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
@@ -44,7 +40,7 @@ async def agent_handler(message: types.Message):
                 """},
                 {"role": "user", "content": user_text}
             ],
-            timeout=10  # ← ждёт 10 секунд, потом ошибка
+            timeout=10
         )
 
         reply = response.choices[0].message.content

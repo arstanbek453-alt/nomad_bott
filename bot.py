@@ -28,7 +28,10 @@ async def agent_handler(message: types.Message):
     thinking = await message.answer("🤔 Думаю...")
 
     try:
-        client = openai.OpenAI(api_key=openai.api_key)
+        client = openai.OpenAI(
+            api_key=openai.api_key,
+            http_client=openai.DefaultHttpxClient()  # ← без прокси
+        )
 
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",

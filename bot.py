@@ -6,7 +6,7 @@ from aiogram.filters import Command
 
 TOKEN = "8833304083:AAE92ZCznJuNakic46jZNzTBoDkUigqMWFo"
 ADMIN_ID = 8144871993
-openai.api_key = "sk-proj-ll7SOJRGEOARrhrFEw14kDsfpmS"
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()

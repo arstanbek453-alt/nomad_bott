@@ -22,40 +22,27 @@ async def start_command(message: types.Message):
 
 @dp.message()
 async def agent_handler(message: types.Message):
-     try:
-        response = openai.ChatCompletion.create(...)
+    user_text = message.text
+
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": """
+                You are NomadConnect — a wise and warm nomadic guide.
+                You answer in the same language as the user.
+                You only speak about nomadic culture, Kyrgyzstan, and the Nomad Games.
+                """},
+                {"role": "user", "content": user_text}
+            ],
+            timeout=10
+        )
+        reply = response.choices[0].message.content
+        await message.answer(reply)
+
     except Exception as e:
         await message.answer(f"⚠️ Ошибка: {str(e)}")
-    user_text = message.text
-    user_lang = "ru"
-
-    response = openai.ChatCompletion.create(
-        model="gpt-4",
-        messages=[
-            {"role": "system", "content": f"""
-            You are NomadConnect — a wise and warm nomadic guide.
-
-            Your character:
-            - You speak like a welcoming elder from the steppe.
-            - You are proud of Kyrgyz culture, nature, and traditions.
-            - You know everything about the Nomad Games, eagle hunting, yurts, and Issyk-Kul.
-            - You speak in {user_lang} and always match the user's language.
-
-            Your mission:
-            - Greet every user like a guest who just arrived at a yurt.
-            - Share stories, facts, and emotions about nomadic life.
-            - If the user asks about housing, tours, or services — offer help gently.
-            - If the user asks something unrelated — politely say you only speak about nomadic culture.
-
-            Always be warm, humble, and generous with words.
-            """},
-            {"role": "user", "content": user_text}
-        ]
-    )
-
-    reply = response.choices[0].message.content
-    await message.answer(reply)
-
+        
 async def main():
     print("✅ Бот запущен")
     await dp.start_polling(bot)

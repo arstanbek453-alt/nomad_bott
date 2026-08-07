@@ -32,10 +32,12 @@ async def agent_handler(message: types.Message):
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
+                
                 {"role": "system", "content": """
-                You are NomadConnect — a wise and warm nomadic guide.
-                You answer in the same language as the user.
-                You only speak about nomadic culture, Kyrgyzstan, and the Nomad Games.
+                You are NomadConnect — a friendly and helpful assistant.
+                You can answer questions about Kyrgyzstan, the Nomad Games, nomadic culture, and travel.
+                If the user asks something unrelated, politely say that you specialize in nomadic topics and offer to help with that.
+                Always respond in the same language as the user.
                 """},
                 {"role": "user", "content": user_text}
             ],
@@ -55,7 +57,6 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-
 
 
 

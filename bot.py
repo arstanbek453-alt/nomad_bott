@@ -3,22 +3,27 @@ import sqlite3
 import openai
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
 
-# =========================================
-# 2. КОНФИГУРАЦИЯ (ЗАМЕНИ НА СВОЁ)
-# =========================================
 TOKEN = "8833304083:AAE92ZCznJuNakic46jZNzTBoDkUigqMWFo"
-ADMIN_ID = 8144871993  # ЗАМЕНИ НА СВОЙ ID
-openai.api_key = "sk-proj-ll7SOJRGEOARrhrFEw14kDsfpmS"  # ВСТАВЬ СВОЙ КЛЮЧ
+ADMIN_ID = 8144871993
+openai.api_key = "sk-proj-ll7SOJRGEOARrhrFEw14kDsfpmS"
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
+@dp.message(Command("start"))
+async def start_command(message: types.Message):
+    await message.answer(
+        "🏔️ Салам, кочевник!\n\n"
+        "Я — NomadConnect. Твой проводник в мир кочевников, гор и традиций.\n"
+        "Расскажи, что тебя интересует: Игры кочевников, охота с беркутом, юрты, или, может, ты ищешь жильё в Кыргызстане?\n\n"
+        "Я здесь, чтобы помочь и поделиться историями 🌾"
+    )
+
 @dp.message()
 async def agent_handler(message: types.Message):
     user_text = message.text
-    user_lang = "ru"  # можно определить автоматически через библиотеку langdetect
+    user_lang = "ru"
 
     response = openai.ChatCompletion.create(
         model="gpt-4",
@@ -47,6 +52,12 @@ async def agent_handler(message: types.Message):
     reply = response.choices[0].message.content
     await message.answer(reply)
 
+async def main():
+    print("✅ Бот запущен")
+    await dp.start_polling(bot)
+
+if __name__ == "__main__":
+    asyncio.run(main())
 
 
 

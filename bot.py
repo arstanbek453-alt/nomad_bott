@@ -252,17 +252,23 @@ async def booking_save(message: types.Message):
     if row:
         host_contact, location = row
 
-        # Сохраняем заявку в базу
-        conn = sqlite3.connect("nomad_bot.db")
-        c = conn.cursor()
-        c.execute("""
-            INSERT INTO bookings (guest_id, guest_username, host_contact, location, days)
-            VALUES (?, ?, ?, ?, ?)
-        """, (user_id, message.from_user.username or "unknown", host_contact, location, days))
-        conn.commit()
-        conn.close()
+        # Сохраняем заявку
+        try:
+            conn = sqlite3.connect("nomad_bot.db")
+            c = conn.cursor()
+            c.execute("""
+                INSERT INTO bookings (guest_id, guest_username, host_contact, location, days)
+                VALUES (?, ?, ?, ?, ?)
+            """, (user_id, message.from_user.username or "unknown", host_contact, location, days))
+            conn.commit()
+            conn.close()
+        except Exception as e:
+            print(f"❌ Ошибка сохранения: {e}")
+            await message.answer("❌ Ошибка при сохранении заявки.")
+            del user_state[user_id]
+            return
 
-        # Отправляем уведомление поставщику
+        # УВЕДОМЛЕНИЕ ПОСТАВЩИКУ
         try:
             await bot.send_message(
                 int(host_contact),
@@ -271,8 +277,20 @@ async def booking_save(message: types.Message):
                 f"👤 Гость: @{message.from_user.username}\n"
                 f"📅 {days} дней"
             )
-        except:
-            print("⚠️ Не удалось отправить уведомление поставщику")
+        except Exception as e:
+            print(f"⚠️ Не удалось отправить уведомление поставщику: {e}")
+
+        # УВЕДОМЛЕНИЕ АДМИНИСТРАТОРУ
+        try:
+            await bot.send_message(
+                ADMIN_ID,
+                f"🆕 Новая заявка!\n"
+                f"📍 {location}\n"
+                f"👤 Гость: @{message.from_user.username}\n"
+                f"📅 {days} дней"
+            )
+        except Exception as e:
+            print(f"⚠️ Не удалось отправить уведомление администратору: {e}")
 
         await message.answer("✅ Заявка отправлена!")
 

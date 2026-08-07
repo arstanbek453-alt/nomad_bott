@@ -25,7 +25,11 @@ async def agent_handler(message: types.Message):
     user_text = message.text
 
     try:
-        response = openai.ChatCompletion.create(
+        # Create a client instance
+        client = openai.OpenAI(api_key=openai.api_key)
+
+        # Use the new client.chat.completions.create() method
+        response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": """
@@ -37,6 +41,8 @@ async def agent_handler(message: types.Message):
             ],
             timeout=10
         )
+
+        # Access the reply correctly
         reply = response.choices[0].message.content
         await message.answer(reply)
 

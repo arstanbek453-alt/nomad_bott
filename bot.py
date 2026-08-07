@@ -1,6 +1,7 @@
 import asyncio
 import sqlite3
 import openai
+import os
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 

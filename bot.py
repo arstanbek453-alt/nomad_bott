@@ -22,6 +22,7 @@ async def start_command(message: types.Message):
 
 @dp.message()
 async def agent_handler(message: types.Message):
+    print(f"📩 Запрос к OpenAI: {user_text}")
     user_text = message.text
 
     try:
